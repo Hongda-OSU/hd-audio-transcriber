@@ -44,7 +44,8 @@ interface TranscriberApi {
   /** Raw whisperx stderr lines, forwarded as they arrive. */
   onProgress(listener: (line: string) => void): void;
 
-  getToken(): Promise<string>;
+  /** Masked, e.g. hf_abc…wxyz, or '' when unset. The real token stays in main. */
+  getTokenPreview(): Promise<string>;
   setToken(token: string): Promise<void>;
   /** Where the token is stored, shown in settings. */
   getConfigPath(): Promise<string>;

@@ -17,7 +17,7 @@ const api: TranscriberApi = {
     ipcRenderer.on('transcribe:progress', (_event, line: string) => listener(line));
   },
 
-  getToken: () => ipcRenderer.invoke('config:getToken'),
+  getTokenPreview: () => ipcRenderer.invoke('config:tokenPreview'),
   setToken: (token) => ipcRenderer.invoke('config:setToken', token),
   getConfigPath: () => ipcRenderer.invoke('config:path'),
 };

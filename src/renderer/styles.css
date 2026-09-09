@@ -460,3 +460,9 @@ body {
   user-select: text;
   cursor: text;
 }
+
+/* Brief highlight so a save is visibly acknowledged. */
+.card__state.is-fresh {
+  color: var(--text);
+  font-weight: 500;
+}

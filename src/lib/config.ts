@@ -25,6 +25,16 @@ export function getToken(): string {
   return read().hfToken ?? '';
 }
 
+/**
+ * A masked form for display: enough to tell which token is stored, without
+ * handing the renderer the real one just to decide whether a field is empty.
+ */
+export function tokenPreview(): string {
+  const token = getToken();
+  if (!token) return '';
+  return token.length > 12 ? `${token.slice(0, 6)}…${token.slice(-4)}` : '••••';
+}
+
 export function setToken(token: string): void {
   const next: Config = { ...read(), hfToken: token.trim() };
   writeFileSync(configPath(), `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });

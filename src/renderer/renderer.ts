@@ -182,9 +182,16 @@ async function runTranscription(): Promise<void> {
 }
 
 async function refreshTokenState(): Promise<void> {
-  const token = await window.api.getToken();
-  tokenState.textContent = token ? 'Saved' : 'Not set';
+  const preview = await window.api.getTokenPreview();
+  tokenState.textContent = preview ? `Saved · ${preview}` : 'Not set';
   tokenPath.textContent = await window.api.getConfigPath();
+}
+
+/** Saving cleared the field and changed one dim word, which read as nothing
+ *  happening. Flash the line so the click visibly lands. */
+function flashTokenState(): void {
+  tokenState.classList.add('is-fresh');
+  setTimeout(() => tokenState.classList.remove('is-fresh'), 1200);
 }
 
 /* --- tabs -------------------------------------------------------------- */
@@ -249,9 +256,10 @@ startButton.addEventListener('click', () => {
 saveTokenButton.addEventListener('click', () => {
   const value = tokenInput.value.trim();
   if (!value) return;
-  void window.api.setToken(value).then(() => {
+  void window.api.setToken(value).then(async () => {
     tokenInput.value = '';
-    void refreshTokenState();
+    await refreshTokenState();
+    flashTokenState();
     clearStatus();
   });
 });

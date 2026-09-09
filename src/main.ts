@@ -4,7 +4,7 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 
 import { probeAudio } from './lib/probe';
 import { cancel, transcribe, WhisperxError } from './lib/whisperx';
-import { getToken, setToken, tokenFile } from './lib/config';
+import { getToken, setToken, tokenFile, tokenPreview } from './lib/config';
 
 // Set before anything reads app.getPath('userData'), or the config lands in the
 // folder every unpackaged Electron app shares.
@@ -117,7 +117,7 @@ ipcMain.handle('audio:probe', async (_event, filePath: string): Promise<AudioInf
   }
 });
 
-ipcMain.handle('config:getToken', () => getToken());
+ipcMain.handle('config:tokenPreview', () => tokenPreview());
 ipcMain.handle('config:setToken', (_event, token: string) => setToken(token));
 ipcMain.handle('config:path', () => tokenFile());
 
