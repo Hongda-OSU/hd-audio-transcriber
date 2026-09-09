@@ -86,7 +86,13 @@ src/lib/exporters.ts    Segments → txt / srt / vtt / docx
 src/renderer/           UI: import, options, progress, results, export
 dist/                   Compiled output, git-ignored
 setup_backend.sh        Backend installer
+scripts/make-samples.sh Regenerates samples/ — test audio and its transcript
+build/make-icon.sh      Regenerates icon.png and icon.icns from icon-source.png
 ```
+
+`build/icon.icns` is not in git; M6 packaging runs `build/make-icon.sh` to
+produce it. Keeping generated files in the repo lets them drift from the source
+— an earlier icon shipped stale for several commits that way.
 
 TypeScript compiles with `tsc` alone — no bundler. The renderer has no npm
 dependencies, so there is nothing to bundle.

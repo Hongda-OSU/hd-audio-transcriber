@@ -9,6 +9,11 @@ dist/
 out/
 *.app
 
+# 由 build/make-icon.sh 从 icon-source.png 生成，M6 打包时重建。
+# 派生文件留在库里只会悄悄过期 —— 曾经有几个 commit 带着旧版图标发出去，
+# 因为没有任何机制强制它跟源文件同步。
+build/icon.icns
+
 # 测试音频
 tmp/
 output/
