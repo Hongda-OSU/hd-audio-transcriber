@@ -51,6 +51,12 @@ ipcMain.handle('audio:probe', async (_event, filePath: string): Promise<AudioInf
 });
 
 void app.whenReady().then(() => {
+  // A packaged build takes its icon from build/icon.icns. In development the
+  // Dock would otherwise show Electron's own, so point it at the same art.
+  if (!app.isPackaged) {
+    app.dock?.setIcon(join(__dirname, '..', 'build', 'icon.png'));
+  }
+
   createWindow();
 
   app.on('activate', () => {
