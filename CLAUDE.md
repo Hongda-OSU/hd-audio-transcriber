@@ -17,5 +17,5 @@ https://app.notion.com/p/3cc60d3cf9f381ddbb55dbdcc0b9d87a
 Out of scope: signing, notarization, App Store, auto-update, non-macOS.
 
 ```bash
-npm run dev    # compile, launch, reload on save
+npm run dev    # compile, launch, reload
 ```
