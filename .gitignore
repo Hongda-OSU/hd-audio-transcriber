@@ -1,0 +1,28 @@
+# 依赖
+node_modules/
+
+# 本机配置：含 HuggingFace token，绝不入库
+config.json
+
+# 打包产物
+dist/
+out/
+*.app
+
+# 转录中间产物 / 测试音频
+tmp/
+output/
+samples/
+*.m4a
+*.mp3
+*.wav
+*.flac
+
+# Claude Code 本机设置
+.claude/settings.local.json
+
+# macOS / 编辑器
+.DS_Store
+*.log
+.vscode/
+.idea/
