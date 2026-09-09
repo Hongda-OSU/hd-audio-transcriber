@@ -20,6 +20,13 @@
   box-sizing: border-box;
 }
 
+/* The UA stylesheet hides [hidden] with display:none, which any explicit
+   display in here silently overrides — .column is display:flex, so both tab
+   panels painted at once. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   height: 100%;
