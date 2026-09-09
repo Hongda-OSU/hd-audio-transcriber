@@ -89,7 +89,7 @@ dependencies, so there is nothing to bundle.
 
 | | Milestone | Done |
 |---|---|---|
-| M1 | Window with drag-and-drop file import | ☐ |
+| M1 | Window with drag-and-drop file import | ☑ |
 | M2 | whisperx wired up — text, speakers, timestamps | ☐ |
 | M3 | Options panel (language, model, speakers) + progress | ☐ |
 | M4 | Rename speakers, export | ☐ |
