@@ -4,11 +4,17 @@ import { basename, extname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawn, type ChildProcess } from 'node:child_process';
 
-// Overridable so tests can point at a stub environment. Planting a fake under
-// the real path would make setup_backend.sh think the venv already exists and
-// skip creating it.
-const ENV_DIR = process.env.TRANSCRIBER_ENV ?? `${process.env.HOME ?? ''}/.transcriber-env`;
-const WHISPERX = `${ENV_DIR}/bin/whisperx`;
+const HOME = process.env.HOME ?? '';
+
+// Searched in order. TRANSCRIBER_ENV comes first so tests can point at a stub —
+// planting a fake under a real path would make setup_backend.sh think the venv
+// already exists and skip creating it. ~/whisperx-env is where the environment
+// actually lives on this machine, built before the script named a path.
+const ENV_CANDIDATES = [
+  process.env.TRANSCRIBER_ENV,
+  `${HOME}/.transcriber-env`,
+  `${HOME}/whisperx-env`,
+].filter((dir): dir is string => Boolean(dir));
 
 /** An error whose message is safe to show the user as-is. */
 export class WhisperxError extends Error {}
@@ -26,15 +32,23 @@ export interface TranscribeOptions {
  * @throws {WhisperxError} pointing at setup_backend.sh — a missing environment
  * is the expected first-run state, never a crash.
  */
-export function resolveWhisperx(): string {
-  try {
-    accessSync(WHISPERX, constants.X_OK);
-    return WHISPERX;
-  } catch {
-    throw new WhisperxError(
-      `No transcription environment at ${ENV_DIR}. Run: bash setup_backend.sh`,
-    );
+export function resolveEnvDir(): string {
+  for (const dir of ENV_CANDIDATES) {
+    try {
+      accessSync(`${dir}/bin/whisperx`, constants.X_OK);
+      return dir;
+    } catch {
+      // Try the next one.
+    }
   }
+  throw new WhisperxError(
+    `No transcription environment found. Looked in: ${ENV_CANDIDATES.join(', ')}. ` +
+      'Run: bash setup_backend.sh',
+  );
+}
+
+export function resolveWhisperx(): string {
+  return `${resolveEnvDir()}/bin/whisperx`;
 }
 
 /** Split out from the spawn so the command can be asserted without running it. */
@@ -101,7 +115,8 @@ export async function transcribe(
   opts: TranscribeOptions,
   onLog: (line: string) => void,
 ): Promise<TranscribeResult> {
-  const bin = resolveWhisperx();
+  const envDir = resolveEnvDir();
+  const bin = `${envDir}/bin/whisperx`;
   const outputDir = await mkdtemp(join(tmpdir(), 'transcriber-'));
   const args = buildArgs(opts, outputDir);
 
@@ -112,7 +127,10 @@ export async function transcribe(
       // A packaged .app inherits no shell PATH, so ffmpeg — which whisperx
       // shells out to — has to be findable from here.
       const child = spawn(bin, args, {
-        env: { ...process.env, PATH: `${ENV_DIR}/bin:/opt/homebrew/bin:/usr/local/bin:${process.env.PATH ?? ''}` },
+        env: {
+          ...process.env,
+          PATH: `${envDir}/bin:/opt/homebrew/bin:/usr/local/bin:${process.env.PATH ?? ''}`,
+        },
       });
       running = child;
 
