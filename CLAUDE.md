@@ -8,10 +8,10 @@ https://app.notion.com/p/3cc60d3cf9f381ddbb55dbdcc0b9d87a
 ## Rules
 
 - Never change the pinned versions in `setup_backend.sh` — torch 2.5.1, pyannote.audio 3.1.1, speechbrain 0.5.16, numpy<2 only work together.
-- Never bundle Python. Spawn `~/.transcriber-env/bin/whisperx`; if it is missing, point the user at `setup_backend.sh` rather than crashing.
+- Never bundle Python. Spawn `~/.transcriber-env/bin/whisperx`; if missing, point at `setup_backend.sh` — never crash.
 - The HuggingFace token lives in `config.json` — never commit or log it.
-- whisperx's JSON is the only source of truth; every export derives from its `segments`.
-- `src/renderer/renderer.ts` is a classic script. An import there emits CommonJS and breaks the page at runtime.
+- whisperx's JSON is the only source of truth; exports derive from its `segments`.
+- `src/renderer/renderer.ts` is a classic script. An import emits CommonJS and breaks the page.
 - No bundler, no React — the complexity belongs in the main process.
 
 Out of scope: signing, notarization, App Store, auto-update, non-macOS, multi-user.
