@@ -466,3 +466,10 @@ body {
   color: var(--text);
   font-weight: 500;
 }
+
+/* A dotted placeholder stands for stored content, so it should not look as
+   faint as an ordinary hint. */
+.token__input::placeholder {
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+}

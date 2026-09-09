@@ -183,6 +183,13 @@ async function runTranscription(): Promise<void> {
 
 async function refreshTokenState(): Promise<void> {
   const preview = await window.api.getTokenPreview();
+
+  // Dots in the field are the usual signal that a secret is stored. They are
+  // the placeholder, not the value: the real token never comes back to the
+  // renderer, and there is nothing here to save by accident.
+  tokenInput.placeholder = preview ? '••••••••••••••••' : 'hf_…';
+  saveTokenButton.textContent = preview ? 'Replace' : 'Save';
+
   tokenState.textContent = preview ? `Saved · ${preview}` : 'Not set';
   tokenPath.textContent = await window.api.getConfigPath();
 }
