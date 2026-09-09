@@ -7,25 +7,47 @@
       "Bash(npm run:*)",
       "Bash(npm start)",
       "Bash(npm ls:*)",
+      "Bash(npx tsc:*)",
       "Bash(node:*)",
+
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git show:*)",
       "Bash(git add:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git ls-files:*)",
+
       "Bash(ffprobe:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(magick:*)",
+      "Bash(sips:*)",
+      "Bash(iconutil:*)",
+      "Bash(say:*)",
+
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(head:*)",
       "Bash(tail:*)",
+      "Bash(wc:*)",
       "Bash(grep:*)",
       "Bash(rg:*)",
       "Bash(find:*)",
       "Bash(sed:*)",
+      "Bash(diff:*)",
+      "Bash(du:*)",
+      "Bash(stat:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(python3:*)",
+
       "Bash(~/.transcriber-env/bin/whisperx:*)",
-      "Bash(~/.transcriber-env/bin/python:*)"
+      "Bash(~/.transcriber-env/bin/python:*)",
+      "Bash(bash scripts/make-samples.sh)",
+      "Bash(bash build/make-icon.sh)"
     ],
     "deny": [
+      "Read(~/Library/Application Support/hd-audio-transcriber/**)",
       "Read(./config.json)",
       "Read(./.env)",
       "Read(./.env.*)"
