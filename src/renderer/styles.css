@@ -480,3 +480,128 @@ body {
   user-select: none;
   cursor: default;
 }
+
+/* --- options ------------------------------------------------------------ */
+
+.options {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+}
+
+.options__field {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.options__label {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.options__select {
+  appearance: none;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: default;
+}
+
+.options__select:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* --- alignment toggle --------------------------------------------------- */
+
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.toggle input {
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.toggle__note {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* --- progress ----------------------------------------------------------- */
+
+.progress {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.progress__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.progress__phase {
+  color: var(--text);
+}
+
+.progress__percent {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress__track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--elevated);
+  overflow: hidden;
+}
+
+.progress__bar {
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 240ms ease;
+}
+
+/* Phases that report nothing get a moving stripe rather than a number, so the
+   bar never implies progress whisperx did not report. */
+.progress__bar.is-waiting {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--accent) 0 10px,
+    transparent 10px 20px
+  );
+  opacity: 0.5;
+  animation: progress-drift 700ms linear infinite;
+}
+
+@keyframes progress-drift {
+  to {
+    background-position: 20px 0;
+  }
+}

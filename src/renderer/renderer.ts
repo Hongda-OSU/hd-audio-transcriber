@@ -18,6 +18,16 @@ const saveTokenButton = document.getElementById('saveToken') as HTMLButtonElemen
 const tokenState = document.getElementById('tokenState') as HTMLElement;
 const tokenPath = document.getElementById('tokenPath') as HTMLElement;
 
+const optLanguage = document.getElementById('optLanguage') as HTMLSelectElement;
+const optModel = document.getElementById('optModel') as HTMLSelectElement;
+const optSpeakers = document.getElementById('optSpeakers') as HTMLSelectElement;
+const optAlign = document.getElementById('optAlign') as HTMLInputElement;
+
+const progressSection = document.getElementById('progress') as HTMLElement;
+const progressPhase = document.getElementById('progressPhase') as HTMLElement;
+const progressPercent = document.getElementById('progressPercent') as HTMLElement;
+const progressBar = document.getElementById('progressBar') as HTMLElement;
+
 const resultSection = document.getElementById('result') as HTMLElement;
 const resultMeta = document.getElementById('resultMeta') as HTMLElement;
 const segmentList = document.getElementById('segments') as HTMLOListElement;
@@ -131,6 +141,49 @@ function setBusy(value: boolean): void {
   dropzone.classList.toggle('is-disabled', value);
 }
 
+/* --- options ----------------------------------------------------------- */
+
+function readSettings(): TranscribeSettings {
+  return {
+    language: optLanguage.value,
+    model: optModel.value,
+    speakers: Number(optSpeakers.value),
+    align: optAlign.checked,
+  };
+}
+
+function applySettings(settings: TranscribeSettings): void {
+  optLanguage.value = settings.language;
+  optModel.value = settings.model;
+  optSpeakers.value = String(settings.speakers);
+  optAlign.checked = settings.align;
+}
+
+/* --- progress ---------------------------------------------------------- */
+
+function showProgress(progress: TranscribeProgress): void {
+  progressSection.hidden = false;
+  progressPhase.textContent = progress.phase;
+
+  if (progress.percent === null) {
+    // Alignment and diarization report nothing, and diarization is about half
+    // the wall time. A bar that keeps moving there would be invented.
+    progressPercent.textContent = '';
+    progressBar.classList.add('is-waiting');
+    progressBar.style.width = '100%';
+  } else {
+    progressPercent.textContent = `${Math.round(progress.percent)}%`;
+    progressBar.classList.remove('is-waiting');
+    progressBar.style.width = `${progress.percent}%`;
+  }
+}
+
+function clearProgress(): void {
+  progressSection.hidden = true;
+  progressBar.classList.remove('is-waiting');
+  progressBar.style.width = '0%';
+}
+
 /* --- actions ----------------------------------------------------------- */
 
 async function loadFile(path: string | null): Promise<void> {
@@ -138,6 +191,7 @@ async function loadFile(path: string | null): Promise<void> {
 
   clearFile();
   clearResult();
+  clearProgress();
   logLine.hidden = true;
   showStatus('Reading…');
 
@@ -159,12 +213,13 @@ async function runTranscription(): Promise<void> {
 
   clearResult();
   setBusy(true);
-  showStatus('Transcribing… the first run downloads models and can take a long time.');
+  showStatus('The first run downloads models and can take a long time.');
   logLine.hidden = false;
   logLine.textContent = '';
 
-  const result = await window.api.transcribe(current.path);
+  const result = await window.api.transcribe(current.path, readSettings());
   setBusy(false);
+  clearProgress();
 
   if ('error' in result) {
     showStatus(result.error, true);
@@ -299,6 +354,7 @@ tokenInput.addEventListener('beforeinput', clearMask);
 tokenInput.addEventListener('focus', clearMask);
 tokenInput.addEventListener('blur', () => {
   if (!tokenInput.value.trim()) void refreshTokenState();
+void window.api.getSettings().then(applySettings);
 });
 
 saveTokenButton.addEventListener('click', () => {
@@ -315,11 +371,13 @@ saveTokenButton.addEventListener('click', () => {
 
 // whisperx is chatty and its last line is the most informative, so the log
 // shows one line rather than growing without bound.
-window.api.onProgress((line) => {
-  logLine.textContent = line;
+window.api.onProgress((progress) => {
+  showProgress(progress);
+  logLine.textContent = progress.line;
 });
 
 tabTranscribe.addEventListener('click', () => showTab('transcribe'));
 tabSettings.addEventListener('click', () => showTab('settings'));
 
 void refreshTokenState();
+void window.api.getSettings().then(applySettings);

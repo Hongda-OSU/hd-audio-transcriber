@@ -103,7 +103,7 @@ dependencies, so there is nothing to bundle.
 |---|---|---|
 | M1 | Window with drag-and-drop file import | ☑ |
 | M2 | whisperx wired up — text, speakers, timestamps | ☑ |
-| M3 | Options panel (language, model, speakers) + progress | ☐ |
+| M3 | Options panel (language, model, speakers, alignment) + progress | ☑ |
 | M4 | Rename speakers, export | ☐ |
 | M5 | Hand the transcript off for cleanup | ☐ |
 | M6 | Packaged `.app` | ☐ |
@@ -118,5 +118,8 @@ dependencies, so there is nothing to bundle.
   puts on each segment — that one is a majority vote, so a question and the
   answer sharing a segment came back as the same person. On the test interview
   that turned 5 segments with a meaningless label into 12 with 12/12 correct.
-- The time estimate is rough — whisperx doesn't report fine-grained progress.
+- The progress bar is real while transcribing — `--print_progress` reports a
+  percentage — and shows only a phase name after that. Alignment and
+  diarization report nothing, and diarization alone is about half the wall
+  time, so anything moving there would be invented.
 - Long files are slow and memory-hungry. Stay plugged in, and consider `caffeinate -dimsu`.

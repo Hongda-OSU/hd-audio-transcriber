@@ -24,6 +24,26 @@ interface Segment {
   speaker?: string;
 }
 
+/** What the user picked in the options row; persisted between runs. */
+interface TranscribeSettings {
+  language: string;
+  model: string;
+  /** 0 lets whisperx decide; anything else pins --min/--max_speakers. */
+  speakers: number;
+  /** Word alignment. Off is faster but collapses each segment to one
+   *  speaker, so the labels stop being trustworthy. */
+  align: boolean;
+}
+
+/** whisperx reports a percentage while transcribing and nothing after. */
+interface TranscribeProgress {
+  phase: string;
+  /** 0–100 within the phase, or null when the phase reports nothing. */
+  percent: number | null;
+  /** The raw log line, for the detail under the bar. */
+  line: string;
+}
+
 interface TranscribeResult {
   segments: Segment[];
   language: string;
@@ -40,9 +60,11 @@ interface TranscriberApi {
   chooseFile(): Promise<string | null>;
   probe(filePath: string): Promise<AudioInfo | IpcFailure>;
 
-  transcribe(filePath: string): Promise<TranscribeResult | IpcFailure>;
-  /** Raw whisperx stderr lines, forwarded as they arrive. */
-  onProgress(listener: (line: string) => void): void;
+  transcribe(filePath: string, settings: TranscribeSettings): Promise<TranscribeResult | IpcFailure>;
+  onProgress(listener: (progress: TranscribeProgress) => void): void;
+
+  getSettings(): Promise<TranscribeSettings>;
+  setSettings(settings: TranscribeSettings): Promise<void>;
 
   /** Masked, e.g. hf_abc…wxyz, or '' when unset. The real token stays in main. */
   getTokenPreview(): Promise<string>;

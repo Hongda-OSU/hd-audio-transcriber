@@ -19,14 +19,22 @@ const ENV_CANDIDATES = [
 /** An error whose message is safe to show the user as-is. */
 export class WhisperxError extends Error {}
 
-export interface TranscribeOptions {
+export interface TranscribeOptions extends TranscribeSettings {
   file: string;
-  language: string;
-  model: string;
-  minSpeakers: number;
-  maxSpeakers: number;
   hfToken: string;
 }
+
+// The lines whisperx prints when it moves on. Only the first reports a
+// percentage; everything after it is silent, and on a real interview
+// diarization alone is about half the wall time.
+const PHASES: Array<[RegExp, string]> = [
+  [/voice activity detection/i, 'Detecting speech'],
+  [/Performing transcription/i, 'Transcribing'],
+  [/Performing alignment/i, 'Aligning words'],
+  [/Performing diarization/i, 'Separating speakers'],
+];
+
+const PROGRESS_LINE = /Progress:\s*([\d.]+)\s*%/;
 
 /**
  * @throws {WhisperxError} pointing at setup_backend.sh — a missing environment
@@ -53,22 +61,31 @@ export function resolveWhisperx(): string {
 
 /** Split out from the spawn so the command can be asserted without running it. */
 export function buildArgs(opts: TranscribeOptions, outputDir: string): string[] {
-  return [
-    opts.file,
-    '--model', opts.model,
-    '--language', opts.language,
-    '--diarize',
-    // Alignment stays on. It is what produces per-word speakers, and those are
-    // the only place a speaker change inside a segment survives — whisperx
-    // itself collapses each segment to a single majority label.
-    // Roughly 1.9x realtime instead of 1.2x; M3 makes it a choice.
-    '--min_speakers', String(opts.minSpeakers),
-    '--max_speakers', String(opts.maxSpeakers),
-    '--hf_token', opts.hfToken,
+  const args = [opts.file, '--model', opts.model];
+
+  // 'auto' means let whisperx detect it, which it does by omitting the flag.
+  if (opts.language !== 'auto') args.push('--language', opts.language);
+
+  args.push('--diarize', '--hf_token', opts.hfToken);
+
+  // Alignment is what produces per-word speakers, the only place a speaker
+  // change inside a segment survives. Off, whisperx labels the whole segment
+  // with one majority speaker.
+  if (!opts.align) args.push('--no_align');
+
+  // Zero speakers means whisperx decides how many there are.
+  if (opts.speakers > 0) {
+    args.push('--min_speakers', String(opts.speakers), '--max_speakers', String(opts.speakers));
+  }
+
+  args.push(
+    '--print_progress', 'True',
     '--compute_type', 'int8',
     '--output_dir', outputDir,
     '--output_format', 'json',
-  ];
+  );
+
+  return args;
 }
 
 /** The same args with the token blanked, for logging. */
@@ -195,16 +212,40 @@ export function cancel(): void {
   running = null;
 }
 
+/**
+ * Turns one stderr line into a progress update, or null if it says nothing.
+ * A phase change clears the percentage rather than leaving the last one on
+ * screen — a bar frozen at 100% while diarization runs reads as a hang.
+ */
+function readProgress(line: string, phase: string): TranscribeProgress | null {
+  for (const [pattern, name] of PHASES) {
+    if (pattern.test(line)) return { phase: name, percent: null, line };
+  }
+
+  const match = PROGRESS_LINE.exec(line);
+  if (match?.[1]) return { phase, percent: Number(match[1]), line };
+
+  return null;
+}
+
 export async function transcribe(
   opts: TranscribeOptions,
-  onLog: (line: string) => void,
+  onProgress: (progress: TranscribeProgress) => void,
 ): Promise<TranscribeResult> {
   const envDir = resolveEnvDir();
   const bin = `${envDir}/bin/whisperx`;
   const outputDir = await mkdtemp(join(tmpdir(), 'transcriber-'));
   const args = buildArgs(opts, outputDir);
 
-  onLog(`$ ${bin} ${redactArgs(args).join(' ')}`);
+  let phase = 'Starting';
+  const report = (line: string) => {
+    const next = readProgress(line, phase);
+    if (!next) return;
+    phase = next.phase;
+    onProgress(next);
+  };
+
+  onProgress({ phase, percent: null, line: `$ ${bin} ${redactArgs(args).join(' ')}` });
 
   try {
     await new Promise<void>((resolve, reject) => {
@@ -223,7 +264,7 @@ export async function transcribe(
         for (const line of chunk.toString().split('\n')) {
           const trimmed = line.trim();
           if (trimmed) {
-            onLog(trimmed);
+            report(trimmed);
             tail = trimmed;
           }
         }

@@ -63,7 +63,65 @@
           <h2 id="fileName" class="file__name"></h2>
           <p id="fileMeta" class="file__meta"></p>
           <p id="filePath" class="file__path"></p>
+
+          <div class="options">
+            <label class="options__field">
+              <span class="options__label">Language</span>
+              <select id="optLanguage" class="options__select">
+                <option value="zh">Chinese</option>
+                <option value="en">English</option>
+                <option value="ja">Japanese</option>
+                <option value="ko">Korean</option>
+                <option value="auto">Detect</option>
+              </select>
+            </label>
+
+            <label class="options__field">
+              <span class="options__label">Model</span>
+              <select id="optModel" class="options__select">
+                <option value="large-v3">large-v3</option>
+                <option value="large-v3-turbo">large-v3-turbo</option>
+                <option value="medium">medium</option>
+                <option value="small">small</option>
+              </select>
+            </label>
+
+            <label class="options__field">
+              <span class="options__label">Speakers</span>
+              <select id="optSpeakers" class="options__select">
+                <option value="0">Detect</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="toggle">
+            <input id="optAlign" type="checkbox" />
+            <span>
+              Word-level alignment
+              <span class="toggle__note">
+                Needed for accurate speakers. Off is faster, but every segment
+                gets a single speaker.
+              </span>
+            </span>
+          </label>
+
           <button id="start" class="button" type="button">Transcribe</button>
+        </section>
+
+        <section id="progress" class="progress" hidden>
+          <div class="progress__head">
+            <span id="progressPhase" class="progress__phase"></span>
+            <span id="progressPercent" class="progress__percent"></span>
+          </div>
+          <div class="progress__track">
+            <div id="progressBar" class="progress__bar"></div>
+          </div>
         </section>
 
         <p id="status" class="status" hidden></p>
@@ -101,7 +159,13 @@
         <section class="card">
           <h2 class="card__title">Transcription</h2>
           <p class="card__hint">
-            Fixed at Chinese · large-v3 · 2 speakers for now. M3 turns these into controls.
+            Language, model, speaker count and alignment sit above the Transcribe
+            button. Whatever you run with is remembered for next time.
+          </p>
+          <p class="card__hint">
+            Alignment roughly halves the speed — 1.2× realtime becomes 1.9× — and
+            it is what makes speaker labels trustworthy. Turn it off only when the
+            text is all you need.
           </p>
         </section>
       </section>

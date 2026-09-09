@@ -10,7 +10,17 @@ function configPath(): string {
 
 interface Config {
   hfToken?: string;
+  settings?: Partial<TranscribeSettings>;
 }
+
+// Alignment defaults on: without it whisperx gives a whole segment one
+// speaker, and speaker separation is the reason this app exists.
+const DEFAULTS: TranscribeSettings = {
+  language: 'zh',
+  model: 'large-v3',
+  speakers: 2,
+  align: true,
+};
 
 function read(): Config {
   try {
@@ -42,4 +52,13 @@ export function setToken(token: string): void {
 
 export function tokenFile(): string {
   return configPath();
+}
+
+export function getSettings(): TranscribeSettings {
+  return { ...DEFAULTS, ...read().settings };
+}
+
+export function setSettings(settings: TranscribeSettings): void {
+  const next: Config = { ...read(), settings };
+  writeFileSync(configPath(), `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
 }
