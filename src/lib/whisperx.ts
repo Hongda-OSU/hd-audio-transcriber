@@ -32,7 +32,7 @@ export function resolveWhisperx(): string {
     return WHISPERX;
   } catch {
     throw new WhisperxError(
-      `找不到转录环境 ${ENV_DIR}。请在项目目录下运行：bash setup_backend.sh`,
+      `No transcription environment at ${ENV_DIR}. Run: bash setup_backend.sh`,
     );
   }
 }
@@ -68,11 +68,11 @@ function parseOutput(raw: string): TranscribeResult {
   try {
     parsed = JSON.parse(raw) as typeof parsed;
   } catch {
-    throw new WhisperxError('whisperx 产出的 json 无法解析。');
+    throw new WhisperxError('whisperx produced JSON that could not be parsed.');
   }
 
   if (!Array.isArray(parsed.segments)) {
-    throw new WhisperxError('whisperx 的输出里没有 segments。');
+    throw new WhisperxError('whisperx output contains no segments.');
   }
 
   const segments: Segment[] = parsed.segments.map((s) => {
@@ -130,13 +130,13 @@ export async function transcribe(
       child.stdout.on('data', lines);
 
       child.on('error', () => {
-        reject(new WhisperxError(`无法启动 whisperx（${bin}）。`));
+        reject(new WhisperxError(`Could not start whisperx at ${bin}.`));
       });
       child.on('close', (code, signal) => {
         running = null;
-        if (signal) return reject(new WhisperxError('转录已取消。'));
+        if (signal) return reject(new WhisperxError('Transcription cancelled.'));
         if (code !== 0) {
-          return reject(new WhisperxError(`whisperx 退出码 ${code}${tail ? `：${tail}` : ''}`));
+          return reject(new WhisperxError(`whisperx exited with code ${code}${tail ? `: ${tail}` : ''}`));
         }
         resolve();
       });
@@ -150,7 +150,7 @@ export async function transcribe(
     try {
       raw = await readFile(jsonPath, 'utf8');
     } catch {
-      throw new WhisperxError(`whisperx 跑完了，但没有找到输出文件 ${stem}.json。`);
+      throw new WhisperxError(`whisperx finished but left no ${stem}.json.`);
     }
 
     return parseOutput(raw);

@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:;"
     />
-    <title>音频转录</title>
+    <title>Audio Transcriber</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
 
@@ -18,12 +18,12 @@
           <path d="M5 11a7 7 0 0 0 14 0" />
           <line x1="12" y1="18" x2="12" y2="22" />
         </svg>
-        <h1 class="titlebar__title">音频转录</h1>
+        <h1 class="titlebar__title">Audio Transcriber</h1>
       </div>
 
       <!-- Centred on the window, not on the space left over beside the brand,
            so it stays put as the title changes. -->
-      <nav class="tabs" role="tablist" aria-label="视图">
+      <nav class="tabs" role="tablist" aria-label="View">
         <button
           id="tabTranscribe"
           class="tabs__tab is-active"
@@ -32,7 +32,7 @@
           aria-selected="true"
           aria-controls="panelTranscribe"
         >
-          转录
+          Transcribe
         </button>
         <button
           id="tabSettings"
@@ -42,7 +42,7 @@
           aria-selected="false"
           aria-controls="panelSettings"
         >
-          设置
+          Settings
         </button>
       </nav>
     </header>
@@ -55,15 +55,15 @@
             <path d="M7 10l5 5 5-5" />
             <path d="M4 20h16" />
           </svg>
-          <span class="dropzone__title">把音频拖到这里</span>
-          <span class="dropzone__hint">或点击选择文件</span>
+          <span class="dropzone__title">Drop audio here</span>
+          <span class="dropzone__hint">or click to choose a file</span>
         </button>
 
         <section id="file" class="file" hidden>
           <h2 id="fileName" class="file__name"></h2>
           <p id="fileMeta" class="file__meta"></p>
           <p id="filePath" class="file__path"></p>
-          <button id="start" class="button" type="button">开始转录</button>
+          <button id="start" class="button" type="button">Transcribe</button>
         </section>
 
         <p id="status" class="status" hidden></p>
@@ -71,7 +71,7 @@
 
         <section id="result" class="result" hidden>
           <div class="result__head">
-            <h2 class="result__title">转录结果</h2>
+            <h2 class="result__title">Transcript</h2>
             <span id="resultMeta" class="result__meta"></span>
           </div>
           <ol id="segments" class="segments"></ol>
@@ -82,7 +82,7 @@
         <section class="card">
           <h2 class="card__title">HuggingFace token</h2>
           <p class="card__hint">
-            说话人分离需要它。只存在本机，不会上传，也不会写进日志。
+            Speaker separation needs one. It stays on this machine — never uploaded, never logged.
           </p>
           <div class="token__row">
             <input
@@ -92,16 +92,16 @@
               placeholder="hf_…"
               spellcheck="false"
             />
-            <button id="saveToken" class="button button--quiet" type="button">保存</button>
+            <button id="saveToken" class="button button--quiet" type="button">Save</button>
           </div>
           <p id="tokenState" class="card__state"></p>
           <p id="tokenPath" class="card__path"></p>
         </section>
 
         <section class="card">
-          <h2 class="card__title">转录参数</h2>
+          <h2 class="card__title">Transcription</h2>
           <p class="card__hint">
-            目前固定为中文 · large-v3 · 2 个说话人。M3 会把它们做成可选项。
+            Fixed at Chinese · large-v3 · 2 speakers for now. M3 turns these into controls.
           </p>
         </section>
       </section>

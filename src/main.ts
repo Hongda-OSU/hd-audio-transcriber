@@ -91,16 +91,16 @@ function watchForReload(win: BrowserWindow): void {
 
 ipcMain.handle('dialog:openAudio', async (): Promise<string | null> => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
-    title: '选择音频文件',
+    title: 'Choose audio',
     properties: ['openFile'],
-    // The audio filter is a convenience, not a gate — "所有文件" stays available
+    // The audio filter is a convenience, not a gate — "All files" stays available
     // because ffprobe, not this list, decides what we can actually read.
     filters: [
       {
-        name: '音频',
+        name: 'Audio',
         extensions: ['m4a', 'mp3', 'wav', 'flac', 'aac', 'ogg', 'opus', 'mp4', 'mov', 'aiff', 'wma'],
       },
-      { name: '所有文件', extensions: ['*'] },
+      { name: 'All files', extensions: ['*'] },
     ],
   });
 
@@ -127,7 +127,7 @@ ipcMain.handle(
     const hfToken = getToken();
     if (!hfToken) {
       return {
-        error: '说话人分离需要 HuggingFace token。请在「设置」里填入。',
+        error: 'Speaker separation needs a HuggingFace token. Add one under Settings.',
       };
     }
 
@@ -148,7 +148,7 @@ ipcMain.handle(
       );
     } catch (err) {
       if (err instanceof WhisperxError) return { error: err.message };
-      return { error: `转录失败：${(err as Error).message}` };
+      return { error: `Transcription failed: ${(err as Error).message}` };
     }
   },
 );

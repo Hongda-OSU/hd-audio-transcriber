@@ -29,7 +29,7 @@ let busy = false;
 /* --- formatting -------------------------------------------------------- */
 
 function formatDuration(seconds: number | null): string {
-  if (seconds === null || !Number.isFinite(seconds)) return '时长未知';
+  if (seconds === null || !Number.isFinite(seconds)) return 'unknown length';
 
   const total = Math.round(seconds);
   const hours = Math.floor(total / 3600);
@@ -52,11 +52,11 @@ function formatTimestamp(seconds: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
-/** SPEAKER_00 → 说话人1. M4 replaces these with real names. */
+/** SPEAKER_00 → Speaker 1. M4 replaces these with real names. */
 function speakerLabel(speaker: string | undefined): string {
-  if (!speaker) return '未知说话人';
+  if (!speaker) return 'Unknown';
   const match = /(\d+)$/.exec(speaker);
-  return match ? `说话人${Number(match[1]) + 1}` : speaker;
+  return match ? `Speaker ${Number(match[1]) + 1}` : speaker;
 }
 
 /* --- rendering --------------------------------------------------------- */
@@ -115,16 +115,19 @@ function renderResult(result: TranscribeResult): void {
   }
 
   const speakers = new Set(result.segments.map((s) => s.speaker).filter(Boolean));
-  resultMeta.textContent = `${result.segments.length} 段 · ${speakers.size} 个说话人${
-    result.language ? ` · ${result.language}` : ''
-  }`;
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  resultMeta.textContent = [
+    plural(result.segments.length, 'segment'),
+    plural(speakers.size, 'speaker'),
+    ...(result.language ? [result.language] : []),
+  ].join(' · ');
   resultSection.hidden = false;
 }
 
 function setBusy(value: boolean): void {
   busy = value;
   startButton.disabled = value;
-  startButton.textContent = value ? '转录中…' : '开始转录';
+  startButton.textContent = value ? 'Transcribing…' : 'Transcribe';
   dropzone.classList.toggle('is-disabled', value);
 }
 
@@ -136,7 +139,7 @@ async function loadFile(path: string | null): Promise<void> {
   clearFile();
   clearResult();
   logLine.hidden = true;
-  showStatus('正在读取…');
+  showStatus('Reading…');
 
   const result = await window.api.probe(path);
 
@@ -156,7 +159,7 @@ async function runTranscription(): Promise<void> {
 
   clearResult();
   setBusy(true);
-  showStatus('正在转录… 首次运行需要下载模型，可能要等很久。');
+  showStatus('Transcribing… the first run downloads models and can take a long time.');
   logLine.hidden = false;
   logLine.textContent = '';
 
@@ -180,7 +183,7 @@ async function runTranscription(): Promise<void> {
 
 async function refreshTokenState(): Promise<void> {
   const token = await window.api.getToken();
-  tokenState.textContent = token ? '已保存' : '尚未设置';
+  tokenState.textContent = token ? 'Saved' : 'Not set';
   tokenPath.textContent = await window.api.getConfigPath();
 }
 

@@ -40,7 +40,7 @@ export function resolveFfprobe(): string {
     }
   }
 
-  throw new ProbeError('找不到 ffprobe。请先安装 ffmpeg：brew install ffmpeg');
+  throw new ProbeError('Cannot find ffprobe. Install ffmpeg first: brew install ffmpeg');
 }
 
 interface FfprobeOutput {
@@ -62,11 +62,11 @@ export async function probeAudio(filePath: string): Promise<AudioInfo> {
   let size: number;
   try {
     const stats = await stat(filePath);
-    if (!stats.isFile()) throw new ProbeError('这不是一个文件。');
+    if (!stats.isFile()) throw new ProbeError('That is not a file.');
     size = stats.size;
   } catch (err) {
     if (err instanceof ProbeError) throw err;
-    throw new ProbeError('读不到这个文件，它可能已经被移动或删除了。');
+    throw new ProbeError('Cannot read that file — it may have been moved or deleted.');
   }
 
   let stdout: string;
@@ -90,22 +90,22 @@ export async function probeAudio(filePath: string): Promise<AudioInfo> {
     const detail = (raw.trim().split('\n').pop() ?? '').replace(`${filePath}: `, '');
 
     if (/invalid data found/i.test(detail)) {
-      throw new ProbeError('这个文件不是 ffmpeg 能识别的音频格式。');
+      throw new ProbeError('ffmpeg does not recognise this as audio.');
     }
-    throw new ProbeError(`ffprobe 读不了这个文件：${detail}`);
+    throw new ProbeError(`ffprobe could not read this file: ${detail}`);
   }
 
   let probed: FfprobeOutput;
   try {
     probed = JSON.parse(stdout) as FfprobeOutput;
   } catch {
-    throw new ProbeError('ffprobe 返回了无法解析的结果。');
+    throw new ProbeError('ffprobe returned something unparseable.');
   }
 
   const audioStreams = probed.streams ?? [];
   const firstStream = audioStreams[0];
   if (!firstStream) {
-    throw new ProbeError('这个文件里没有音频流。');
+    throw new ProbeError('This file has no audio stream.');
   }
 
   // Container duration is the reliable one, but a few formats only carry it on
