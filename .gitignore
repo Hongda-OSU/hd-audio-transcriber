@@ -9,7 +9,7 @@ dist/
 out/
 *.app
 
-# 转录中间产物 / 测试音频
+# 测试音频
 tmp/
 output/
 samples/
@@ -17,6 +17,12 @@ samples/
 *.mp3
 *.wav
 *.flac
+
+# 转录产物：可能含真人访谈内容
+*.srt
+*.vtt
+*.docx
+transcript*.json
 
 # Claude Code 本机设置
 .claude/settings.local.json
