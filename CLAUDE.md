@@ -57,10 +57,21 @@ whisperx 的 json 是唯一权威数据源。所有导出格式（txt / srt / vt
 M1 空壳+拖拽 → M2 接通 whisperx → M3 选项+进度条 → M4 改真名+导出 → M5 交给整理 → M6 打包 `.app`。
 每个里程碑的验收标准见 README 与 Notion 主文档。
 
+## 代码组织
+
+TypeScript，`tsc` 直接编译到 `dist/`，**没有打包器**——renderer 没有 npm 依赖，没东西可打包。不要引入 Vite / webpack / esbuild，也不要引入 React：这个 App 的复杂度全在主进程（子进程管理、进度解析、导出格式），renderer 是薄的。
+
+- `src/main.ts` / `src/preload.ts` / `src/lib/*.ts` → CommonJS 模块
+- `src/renderer/renderer.ts` → **普通脚本**，不是模块。tsconfig 里 `moduleDetection: "legacy"` 就是为它设的：一旦它含 import/export，tsc 会发出 `exports.__esModule`，而页面按 classic script 加载，运行时直接抛 `exports is not defined`。
+- 跨进程共享的类型放 `src/types.d.ts`（ambient 全局），renderer 不用 import 就能用。
+- `src/renderer/*.html` 和 `*.css` 由 `npm run assets` 复制进 `dist/`，新增静态文件要同步改那条命令。
+
 ## 开发命令
 
 ```bash
-npm install && npm start        # 起 App
+npm install && npm start        # 编译并启动 App
+npm run watch                   # tsc --watch，改完在 App 里 ⌘R
+npm run typecheck               # 只查类型，不产出
 bash setup_backend.sh           # 装/重装后端环境（换机器时）
 source ~/.transcriber-env/bin/activate && python -c 'import whisperx, pyannote.audio; print("OK")'
 ```

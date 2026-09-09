@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    // node16 keys off package.json, which has no "type" field, so output stays
+    // CommonJS — what Electron's main process and the classic renderer script
+    // both expect.
+    "module": "node16",
+    "moduleResolution": "node16",
+
+    // node16 would otherwise mark every file as a module, and the CommonJS
+    // marker it emits (`exports.__esModule = …`) throws in the renderer, which
+    // the page loads as a classic script. Legacy detection keeps files without
+    // import/export as scripts; main and preload still compile as modules.
+    "moduleDetection": "legacy",
+    "lib": ["ES2022", "DOM"],
+
+    "rootDir": "src",
+    "outDir": "dist",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    "sourceMap": true
+  },
+  "include": ["src/**/*"]
+}

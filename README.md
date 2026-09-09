@@ -44,8 +44,16 @@ source ~/.transcriber-env/bin/activate && python -c 'import whisperx, pyannote.a
 ## Run
 
 ```bash
-npm install
-npm start
+npm install     # once
+npm start       # compiles TypeScript, then launches the app
+```
+
+While working on it, `npm run watch` recompiles on save in one terminal; restart
+the app (or press ⌘R in its window) to pick the changes up.
+
+```bash
+npm run build       # compile to dist/
+npm run typecheck   # types only, no output
 ```
 
 ## How it works
@@ -63,13 +71,19 @@ Every export format is generated from that JSON.
 ## Layout
 
 ```
-main.js            Window, IPC, whisperx subprocess
-preload.js         IPC bridge to the renderer
-renderer/          UI: import, options, progress, results, export
-lib/whisperx.js    Options → command → segments
-lib/exporters.js   Segments → txt / srt / vtt / docx
-setup_backend.sh   Backend installer
+src/main.ts             Window, IPC, whisperx subprocess
+src/preload.ts          IPC bridge to the renderer
+src/types.d.ts          Shapes shared by main, preload and renderer
+src/lib/probe.ts        ffprobe → duration and container format
+src/lib/whisperx.ts     Options → command → segments
+src/lib/exporters.ts    Segments → txt / srt / vtt / docx
+src/renderer/           UI: import, options, progress, results, export
+dist/                   Compiled output, git-ignored
+setup_backend.sh        Backend installer
 ```
+
+TypeScript compiles with `tsc` alone — no bundler. The renderer has no npm
+dependencies, so there is nothing to bundle.
 
 ## Status
 
