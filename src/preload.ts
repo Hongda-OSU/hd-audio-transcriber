@@ -8,6 +8,17 @@ const api: TranscriberApi = {
   chooseFile: () => ipcRenderer.invoke('dialog:openAudio'),
 
   probe: (filePath) => ipcRenderer.invoke('audio:probe', filePath),
+
+  transcribe: (filePath) => ipcRenderer.invoke('audio:transcribe', filePath),
+
+  // The event object stays on this side of the bridge; the renderer only ever
+  // sees the line itself.
+  onProgress: (listener) => {
+    ipcRenderer.on('transcribe:progress', (_event, line: string) => listener(line));
+  },
+
+  getToken: () => ipcRenderer.invoke('config:getToken'),
+  setToken: (token) => ipcRenderer.invoke('config:setToken', token),
 };
 
 contextBridge.exposeInMainWorld('api', api);

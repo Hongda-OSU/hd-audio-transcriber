@@ -21,23 +21,52 @@
     </header>
 
     <main class="stage">
-      <button id="dropzone" class="dropzone" type="button">
-        <svg class="dropzone__icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3v12" />
-          <path d="M7 10l5 5 5-5" />
-          <path d="M4 20h16" />
-        </svg>
-        <span class="dropzone__title">把音频拖到这里</span>
-        <span class="dropzone__hint">或点击选择文件</span>
-      </button>
+      <div class="column">
+        <button id="dropzone" class="dropzone" type="button">
+          <svg class="dropzone__icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v12" />
+            <path d="M7 10l5 5 5-5" />
+            <path d="M4 20h16" />
+          </svg>
+          <span class="dropzone__title">把音频拖到这里</span>
+          <span class="dropzone__hint">或点击选择文件</span>
+        </button>
 
-      <p id="status" class="status" hidden></p>
+        <section id="file" class="file" hidden>
+          <h2 id="fileName" class="file__name"></h2>
+          <p id="fileMeta" class="file__meta"></p>
+          <p id="filePath" class="file__path"></p>
+          <button id="start" class="button" type="button">开始转录</button>
+        </section>
 
-      <section id="file" class="file" hidden>
-        <h2 id="fileName" class="file__name"></h2>
-        <p id="fileMeta" class="file__meta"></p>
-        <p id="filePath" class="file__path"></p>
-      </section>
+        <!-- Only shown when config.json has no token yet: without one,
+             --diarize cannot run at all. -->
+        <section id="tokenRow" class="token" hidden>
+          <label class="token__label" for="token">HuggingFace token</label>
+          <div class="token__row">
+            <input
+              id="token"
+              class="token__input"
+              type="password"
+              placeholder="hf_…"
+              spellcheck="false"
+            />
+            <button id="saveToken" class="button button--quiet" type="button">保存</button>
+          </div>
+          <p class="token__hint">说话人分离需要它。只存在本机，不会上传。</p>
+        </section>
+
+        <p id="status" class="status" hidden></p>
+        <p id="log" class="log" hidden></p>
+
+        <section id="result" class="result" hidden>
+          <div class="result__head">
+            <h2 class="result__title">转录结果</h2>
+            <span id="resultMeta" class="result__meta"></span>
+          </div>
+          <ol id="segments" class="segments"></ol>
+        </section>
+      </div>
     </main>
 
     <script src="renderer.js"></script>

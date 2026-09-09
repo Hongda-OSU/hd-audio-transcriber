@@ -2,6 +2,17 @@ import { join } from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 
 import { probeAudio } from './lib/probe';
+import { cancel, transcribe, WhisperxError } from './lib/whisperx';
+import { getToken, setToken, tokenFile } from './lib/config';
+
+// Set before anything reads app.getPath('userData'), or the config lands in the
+// folder every unpackaged Electron app shares.
+app.setName('hd-audio-transcriber');
+
+// M3 turns these into UI controls. Until then they are the spec's defaults.
+const LANGUAGE = 'zh';
+const MODEL = 'large-v3';
+const SPEAKERS = 2;
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -17,6 +28,10 @@ function createWindow(): BrowserWindow {
       nodeIntegration: false,
     },
   });
+
+  // A run outlives its window otherwise, and whisperx on a long file will sit
+  // there burning CPU long after the app looks closed.
+  win.on('close', cancel);
 
   void win.loadFile(join(__dirname, 'renderer', 'index.html'));
   return win;
@@ -50,6 +65,41 @@ ipcMain.handle('audio:probe', async (_event, filePath: string): Promise<AudioInf
   }
 });
 
+ipcMain.handle('config:getToken', () => getToken());
+ipcMain.handle('config:setToken', (_event, token: string) => setToken(token));
+
+ipcMain.handle(
+  'audio:transcribe',
+  async (event, filePath: string): Promise<TranscribeResult | IpcFailure> => {
+    const hfToken = getToken();
+    if (!hfToken) {
+      return {
+        error: `说话人分离需要 HuggingFace token。请先在上方填入，它会存到 ${tokenFile()}`,
+      };
+    }
+
+    try {
+      return await transcribe(
+        {
+          file: filePath,
+          language: LANGUAGE,
+          model: MODEL,
+          minSpeakers: SPEAKERS,
+          maxSpeakers: SPEAKERS,
+          hfToken,
+        },
+        (line) => {
+          // The window can be gone by the time a late line arrives.
+          if (!event.sender.isDestroyed()) event.sender.send('transcribe:progress', line);
+        },
+      );
+    } catch (err) {
+      if (err instanceof WhisperxError) return { error: err.message };
+      return { error: `转录失败：${(err as Error).message}` };
+    }
+  },
+);
+
 void app.whenReady().then(() => {
   // A packaged build takes its icon from build/icon.icns. In development the
   // Dock would otherwise show Electron's own, so point it at the same art.
@@ -63,6 +113,8 @@ void app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+
+app.on('before-quit', cancel);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

@@ -1,9 +1,24 @@
 const dropzone = document.getElementById('dropzone') as HTMLButtonElement;
 const statusLine = document.getElementById('status') as HTMLParagraphElement;
+const logLine = document.getElementById('log') as HTMLParagraphElement;
+
 const fileSection = document.getElementById('file') as HTMLElement;
 const fileName = document.getElementById('fileName') as HTMLElement;
 const fileMeta = document.getElementById('fileMeta') as HTMLElement;
-const filePath = document.getElementById('filePath') as HTMLElement;
+const filePathEl = document.getElementById('filePath') as HTMLElement;
+const startButton = document.getElementById('start') as HTMLButtonElement;
+
+const tokenRow = document.getElementById('tokenRow') as HTMLElement;
+const tokenInput = document.getElementById('token') as HTMLInputElement;
+const saveTokenButton = document.getElementById('saveToken') as HTMLButtonElement;
+
+const resultSection = document.getElementById('result') as HTMLElement;
+const resultMeta = document.getElementById('resultMeta') as HTMLElement;
+const segmentList = document.getElementById('segments') as HTMLOListElement;
+
+/** The file currently loaded, and the input to a transcription run. */
+let current: AudioInfo | null = null;
+let busy = false;
 
 /* --- formatting -------------------------------------------------------- */
 
@@ -24,6 +39,20 @@ function formatSize(bytes: number): string {
   return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
 }
 
+function formatTimestamp(seconds: number): string {
+  const total = Math.floor(seconds);
+  const minutes = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+/** SPEAKER_00 → 说话人1. M4 replaces these with real names. */
+function speakerLabel(speaker: string | undefined): string {
+  if (!speaker) return '未知说话人';
+  const match = /(\d+)$/.exec(speaker);
+  return match ? `说话人${Number(match[1]) + 1}` : speaker;
+}
+
 /* --- rendering --------------------------------------------------------- */
 
 function showStatus(message: string, isError = false): void {
@@ -37,20 +66,70 @@ function clearStatus(): void {
 }
 
 function showFile(info: AudioInfo): void {
+  current = info;
   fileName.textContent = info.name;
   fileMeta.textContent = [formatDuration(info.durationSec), formatSize(info.sizeBytes)].join(' · ');
-  filePath.textContent = info.path;
+  filePathEl.textContent = info.path;
   fileSection.hidden = false;
 }
 
 function clearFile(): void {
+  current = null;
   fileSection.hidden = true;
 }
 
+function clearResult(): void {
+  resultSection.hidden = true;
+  segmentList.replaceChildren();
+}
+
+function renderResult(result: TranscribeResult): void {
+  segmentList.replaceChildren();
+
+  for (const segment of result.segments) {
+    const item = document.createElement('li');
+    item.className = 'segment';
+
+    const time = document.createElement('span');
+    time.className = 'segment__time';
+    time.textContent = formatTimestamp(segment.start);
+
+    const who = document.createElement('span');
+    who.className = 'segment__speaker';
+    who.textContent = speakerLabel(segment.speaker);
+    // M4 renames speakers in bulk; the attribute is what it will select on.
+    who.dataset.speaker = segment.speaker ?? '';
+
+    const text = document.createElement('span');
+    text.className = 'segment__text';
+    text.textContent = segment.text;
+
+    item.append(time, who, text);
+    segmentList.append(item);
+  }
+
+  const speakers = new Set(result.segments.map((s) => s.speaker).filter(Boolean));
+  resultMeta.textContent = `${result.segments.length} 段 · ${speakers.size} 个说话人${
+    result.language ? ` · ${result.language}` : ''
+  }`;
+  resultSection.hidden = false;
+}
+
+function setBusy(value: boolean): void {
+  busy = value;
+  startButton.disabled = value;
+  startButton.textContent = value ? '转录中…' : '开始转录';
+  dropzone.classList.toggle('is-disabled', value);
+}
+
+/* --- actions ----------------------------------------------------------- */
+
 async function loadFile(path: string | null): Promise<void> {
-  if (!path) return;
+  if (!path || busy) return;
 
   clearFile();
+  clearResult();
+  logLine.hidden = true;
   showStatus('正在读取…');
 
   const result = await window.api.probe(path);
@@ -64,6 +143,33 @@ async function loadFile(path: string | null): Promise<void> {
 
   clearStatus();
   showFile(result);
+}
+
+async function runTranscription(): Promise<void> {
+  if (!current || busy) return;
+
+  clearResult();
+  setBusy(true);
+  showStatus('正在转录… 首次运行需要下载模型，可能要等很久。');
+  logLine.hidden = false;
+  logLine.textContent = '';
+
+  const result = await window.api.transcribe(current.path);
+  setBusy(false);
+
+  if ('error' in result) {
+    showStatus(result.error, true);
+    void refreshTokenRow();
+    return;
+  }
+
+  clearStatus();
+  logLine.hidden = true;
+  renderResult(result);
+}
+
+async function refreshTokenRow(): Promise<void> {
+  tokenRow.hidden = (await window.api.getToken()) !== '';
 }
 
 /* --- drag and drop ----------------------------------------------------- */
@@ -81,7 +187,7 @@ function setDragging(dragging: boolean): void {
 // miss anywhere in the frame is still caught.
 window.addEventListener('dragover', (event) => {
   event.preventDefault();
-  if (isFileDrag(event)) setDragging(true);
+  if (isFileDrag(event) && !busy) setDragging(true);
 });
 
 window.addEventListener('dragleave', (event) => {
@@ -101,8 +207,30 @@ window.addEventListener('drop', (event) => {
   void loadFile(window.api.getPathForFile(file));
 });
 
-/* --- file picker ------------------------------------------------------- */
+/* --- wiring ------------------------------------------------------------ */
 
 dropzone.addEventListener('click', () => {
   void window.api.chooseFile().then(loadFile);
 });
+
+startButton.addEventListener('click', () => {
+  void runTranscription();
+});
+
+saveTokenButton.addEventListener('click', () => {
+  const value = tokenInput.value.trim();
+  if (!value) return;
+  void window.api.setToken(value).then(() => {
+    tokenInput.value = '';
+    void refreshTokenRow();
+    clearStatus();
+  });
+});
+
+// whisperx is chatty and its last line is the most informative, so the log
+// shows one line rather than growing without bound.
+window.api.onProgress((line) => {
+  logLine.textContent = line;
+});
+
+void refreshTokenRow();

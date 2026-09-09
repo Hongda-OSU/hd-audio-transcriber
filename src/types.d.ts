@@ -12,6 +12,23 @@ interface AudioInfo {
   formatName: string;
 }
 
+/**
+ * One line of transcript, straight out of whisperx's JSON. This is the app's
+ * source of truth — every export format is derived from a list of these.
+ */
+interface Segment {
+  start: number;
+  end: number;
+  text: string;
+  /** Only present when whisperx ran with --diarize. */
+  speaker?: string;
+}
+
+interface TranscribeResult {
+  segments: Segment[];
+  language: string;
+}
+
 /** IPC handlers return this instead of rejecting, so the UI can show the text. */
 interface IpcFailure {
   error: string;
@@ -22,6 +39,13 @@ interface TranscriberApi {
   getPathForFile(file: File): string;
   chooseFile(): Promise<string | null>;
   probe(filePath: string): Promise<AudioInfo | IpcFailure>;
+
+  transcribe(filePath: string): Promise<TranscribeResult | IpcFailure>;
+  /** Raw whisperx stderr lines, forwarded as they arrive. */
+  onProgress(listener: (line: string) => void): void;
+
+  getToken(): Promise<string>;
+  setToken(token: string): Promise<void>;
 }
 
 interface Window {
