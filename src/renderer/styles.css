@@ -473,3 +473,10 @@ body {
   color: var(--text-dim);
   letter-spacing: 0.12em;
 }
+
+/* The stand-in bullets are decoration, not content: nothing to select, and so
+   nothing a selection could carry off. */
+.token__input.is-masked {
+  user-select: none;
+  cursor: default;
+}

@@ -195,9 +195,11 @@ async function refreshTokenState(): Promise<void> {
   if (preview) {
     tokenInput.value = MASK;
     tokenInput.dataset.masked = 'true';
+    tokenInput.classList.add('is-masked');
   } else {
     tokenInput.value = '';
     delete tokenInput.dataset.masked;
+    tokenInput.classList.remove('is-masked');
   }
   tokenInput.placeholder = 'hf_…';
   saveTokenButton.textContent = preview ? 'Replace' : 'Save';
@@ -212,6 +214,7 @@ function clearMask(): void {
   if (tokenInput.dataset.masked) {
     tokenInput.value = '';
     delete tokenInput.dataset.masked;
+    tokenInput.classList.remove('is-masked');
   }
 }
 
@@ -289,9 +292,13 @@ for (const event of ['copy', 'cut', 'dragstart'] as const) {
 }
 
 tokenInput.addEventListener('beforeinput', clearMask);
-tokenInput.addEventListener('focus', () => {
-  // Selecting the bullets is fine; editing them is what has to start clean.
-  tokenInput.select();
+
+// The bullets are not selectable, so there is nothing to click into: focusing
+// empties the field to type a replacement. Leaving it untouched puts them back,
+// so a stray click does not read as "the token is gone".
+tokenInput.addEventListener('focus', clearMask);
+tokenInput.addEventListener('blur', () => {
+  if (!tokenInput.value.trim()) void refreshTokenState();
 });
 
 saveTokenButton.addEventListener('click', () => {
