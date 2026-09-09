@@ -12,16 +12,43 @@
 
   <body>
     <header class="titlebar">
-      <svg class="titlebar__icon" viewBox="0 0 24 24" aria-hidden="true">
-        <rect x="9" y="2" width="6" height="11" rx="3" />
-        <path d="M5 11a7 7 0 0 0 14 0" />
-        <line x1="12" y1="18" x2="12" y2="22" />
-      </svg>
-      <h1 class="titlebar__title">音频转录</h1>
+      <div class="titlebar__brand">
+        <svg class="titlebar__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="9" y="2" width="6" height="11" rx="3" />
+          <path d="M5 11a7 7 0 0 0 14 0" />
+          <line x1="12" y1="18" x2="12" y2="22" />
+        </svg>
+        <h1 class="titlebar__title">音频转录</h1>
+      </div>
+
+      <!-- Centred on the window, not on the space left over beside the brand,
+           so it stays put as the title changes. -->
+      <nav class="tabs" role="tablist" aria-label="视图">
+        <button
+          id="tabTranscribe"
+          class="tabs__tab is-active"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panelTranscribe"
+        >
+          转录
+        </button>
+        <button
+          id="tabSettings"
+          class="tabs__tab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panelSettings"
+        >
+          设置
+        </button>
+      </nav>
     </header>
 
     <main class="stage">
-      <div class="column">
+      <section id="panelTranscribe" class="column" role="tabpanel" aria-labelledby="tabTranscribe">
         <button id="dropzone" class="dropzone" type="button">
           <svg class="dropzone__icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 3v12" />
@@ -39,23 +66,6 @@
           <button id="start" class="button" type="button">开始转录</button>
         </section>
 
-        <!-- Only shown when config.json has no token yet: without one,
-             --diarize cannot run at all. -->
-        <section id="tokenRow" class="token" hidden>
-          <label class="token__label" for="token">HuggingFace token</label>
-          <div class="token__row">
-            <input
-              id="token"
-              class="token__input"
-              type="password"
-              placeholder="hf_…"
-              spellcheck="false"
-            />
-            <button id="saveToken" class="button button--quiet" type="button">保存</button>
-          </div>
-          <p class="token__hint">说话人分离需要它。只存在本机，不会上传。</p>
-        </section>
-
         <p id="status" class="status" hidden></p>
         <p id="log" class="log" hidden></p>
 
@@ -66,7 +76,35 @@
           </div>
           <ol id="segments" class="segments"></ol>
         </section>
-      </div>
+      </section>
+
+      <section id="panelSettings" class="column" role="tabpanel" aria-labelledby="tabSettings" hidden>
+        <section class="card">
+          <h2 class="card__title">HuggingFace token</h2>
+          <p class="card__hint">
+            说话人分离需要它。只存在本机，不会上传，也不会写进日志。
+          </p>
+          <div class="token__row">
+            <input
+              id="token"
+              class="token__input"
+              type="password"
+              placeholder="hf_…"
+              spellcheck="false"
+            />
+            <button id="saveToken" class="button button--quiet" type="button">保存</button>
+          </div>
+          <p id="tokenState" class="card__state"></p>
+          <p id="tokenPath" class="card__path"></p>
+        </section>
+
+        <section class="card">
+          <h2 class="card__title">转录参数</h2>
+          <p class="card__hint">
+            目前固定为中文 · large-v3 · 2 个说话人。M3 会把它们做成可选项。
+          </p>
+        </section>
+      </section>
     </main>
 
     <script src="renderer.js"></script>

@@ -46,6 +46,8 @@ interface TranscriberApi {
 
   getToken(): Promise<string>;
   setToken(token: string): Promise<void>;
+  /** Where the token is stored, shown in settings. */
+  getConfigPath(): Promise<string>;
 }
 
 interface Window {

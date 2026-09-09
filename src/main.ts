@@ -1,3 +1,4 @@
+import { copyFileSync, watch } from 'node:fs';
 import { join } from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 
@@ -34,7 +35,58 @@ function createWindow(): BrowserWindow {
   win.on('close', cancel);
 
   void win.loadFile(join(__dirname, 'renderer', 'index.html'));
+  watchForReload(win);
   return win;
+}
+
+/**
+ * Reloads the window when `tsc --watch` rewrites dist/. Renderer changes just
+ * reload the page; anything in the main process needs the whole app back, so
+ * it relaunches. Development only — a packaged app never watches itself.
+ */
+function watchForReload(win: BrowserWindow): void {
+  if (app.isPackaged) return;
+
+  const srcRenderer = join(__dirname, '..', 'src', 'renderer');
+
+  let timer: NodeJS.Timeout | undefined;
+  let mainChanged = false;
+
+  const settle = () => {
+    // tsc rewrites several files in a burst; act once it settles, or the app
+    // relaunches mid-compile and loads a half-written dist.
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (mainChanged) {
+        cancel();
+        app.relaunch();
+        app.exit(0);
+      } else if (!win.isDestroyed()) {
+        win.webContents.reloadIgnoringCache();
+      }
+      mainChanged = false;
+    }, 250);
+  };
+
+  // Compiled output: tsc --watch writes here.
+  watch(__dirname, { recursive: true }, (_event, filename) => {
+    if (!filename || !/\.(js|css|html)$/.test(filename)) return;
+    if (!filename.startsWith('renderer')) mainChanged = true;
+    settle();
+  });
+
+  // tsc only knows about .ts, so the markup and styles are copied here too —
+  // otherwise editing them would change nothing until the next npm run build.
+  watch(srcRenderer, (_event, filename) => {
+    if (!filename || !/\.(css|html)$/.test(filename)) return;
+    try {
+      copyFileSync(join(srcRenderer, filename), join(__dirname, 'renderer', filename));
+    } catch {
+      // The editor may have moved the file mid-save; the next event catches it.
+      return;
+    }
+    settle();
+  });
 }
 
 ipcMain.handle('dialog:openAudio', async (): Promise<string | null> => {
@@ -67,6 +119,7 @@ ipcMain.handle('audio:probe', async (_event, filePath: string): Promise<AudioInf
 
 ipcMain.handle('config:getToken', () => getToken());
 ipcMain.handle('config:setToken', (_event, token: string) => setToken(token));
+ipcMain.handle('config:path', () => tokenFile());
 
 ipcMain.handle(
   'audio:transcribe',
@@ -74,7 +127,7 @@ ipcMain.handle(
     const hfToken = getToken();
     if (!hfToken) {
       return {
-        error: `说话人分离需要 HuggingFace token。请先在上方填入，它会存到 ${tokenFile()}`,
+        error: '说话人分离需要 HuggingFace token。请在「设置」里填入。',
       };
     }
 

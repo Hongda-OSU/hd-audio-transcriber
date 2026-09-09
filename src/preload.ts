@@ -19,6 +19,7 @@ const api: TranscriberApi = {
 
   getToken: () => ipcRenderer.invoke('config:getToken'),
   setToken: (token) => ipcRenderer.invoke('config:setToken', token),
+  getConfigPath: () => ipcRenderer.invoke('config:path'),
 };
 
 contextBridge.exposeInMainWorld('api', api);

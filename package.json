@@ -8,6 +8,7 @@
     "assets": "mkdir -p dist/renderer && cp src/renderer/index.html src/renderer/styles.css dist/renderer/",
     "build": "tsc && npm run assets",
     "start": "npm run build && electron .",
+    "dev": "bash scripts/dev.sh",
     "watch": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },

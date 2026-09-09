@@ -8,9 +8,15 @@ const fileMeta = document.getElementById('fileMeta') as HTMLElement;
 const filePathEl = document.getElementById('filePath') as HTMLElement;
 const startButton = document.getElementById('start') as HTMLButtonElement;
 
-const tokenRow = document.getElementById('tokenRow') as HTMLElement;
+const tabTranscribe = document.getElementById('tabTranscribe') as HTMLButtonElement;
+const tabSettings = document.getElementById('tabSettings') as HTMLButtonElement;
+const panelTranscribe = document.getElementById('panelTranscribe') as HTMLElement;
+const panelSettings = document.getElementById('panelSettings') as HTMLElement;
+
 const tokenInput = document.getElementById('token') as HTMLInputElement;
 const saveTokenButton = document.getElementById('saveToken') as HTMLButtonElement;
+const tokenState = document.getElementById('tokenState') as HTMLElement;
+const tokenPath = document.getElementById('tokenPath') as HTMLElement;
 
 const resultSection = document.getElementById('result') as HTMLElement;
 const resultMeta = document.getElementById('resultMeta') as HTMLElement;
@@ -159,7 +165,11 @@ async function runTranscription(): Promise<void> {
 
   if ('error' in result) {
     showStatus(result.error, true);
-    void refreshTokenRow();
+    // A missing token is the one failure the user can fix right now, so put
+    // them in front of the field instead of making them find it.
+    if (result.error.includes('token')) {
+      void refreshTokenState().then(() => showTab('settings'));
+    }
     return;
   }
 
@@ -168,8 +178,24 @@ async function runTranscription(): Promise<void> {
   renderResult(result);
 }
 
-async function refreshTokenRow(): Promise<void> {
-  tokenRow.hidden = (await window.api.getToken()) !== '';
+async function refreshTokenState(): Promise<void> {
+  const token = await window.api.getToken();
+  tokenState.textContent = token ? '已保存' : '尚未设置';
+  tokenPath.textContent = await window.api.getConfigPath();
+}
+
+/* --- tabs -------------------------------------------------------------- */
+
+function showTab(which: 'transcribe' | 'settings'): void {
+  const settings = which === 'settings';
+
+  panelTranscribe.hidden = settings;
+  panelSettings.hidden = !settings;
+
+  tabTranscribe.classList.toggle('is-active', !settings);
+  tabSettings.classList.toggle('is-active', settings);
+  tabTranscribe.setAttribute('aria-selected', String(!settings));
+  tabSettings.setAttribute('aria-selected', String(settings));
 }
 
 /* --- drag and drop ----------------------------------------------------- */
@@ -222,7 +248,7 @@ saveTokenButton.addEventListener('click', () => {
   if (!value) return;
   void window.api.setToken(value).then(() => {
     tokenInput.value = '';
-    void refreshTokenRow();
+    void refreshTokenState();
     clearStatus();
   });
 });
@@ -233,4 +259,7 @@ window.api.onProgress((line) => {
   logLine.textContent = line;
 });
 
-void refreshTokenRow();
+tabTranscribe.addEventListener('click', () => showTab('transcribe'));
+tabSettings.addEventListener('click', () => showTab('settings'));
+
+void refreshTokenState();

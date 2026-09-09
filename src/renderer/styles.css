@@ -45,12 +45,18 @@ body {
 
 .titlebar {
   -webkit-app-region: drag;
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
   padding: 12px 16px 12px 88px;
   height: 52px;
   flex: 0 0 auto;
+}
+
+.titlebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .titlebar__icon {
@@ -366,4 +372,88 @@ body {
   user-select: text;
   cursor: text;
   overflow-wrap: anywhere;
+}
+
+/* --- centred segmented control ----------------------------------------- */
+/* Positioned against the window rather than laid out after the brand, so it
+   does not drift when the title changes length. */
+
+.tabs {
+  -webkit-app-region: no-drag;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.tabs__tab {
+  appearance: none;
+  padding: 4px 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: default;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.tabs__tab:hover:not(.is-active) {
+  color: var(--text);
+}
+
+.tabs__tab.is-active {
+  background: var(--elevated);
+  color: var(--text);
+}
+
+.tabs__tab:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* --- settings cards ----------------------------------------------------- */
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.card__title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.card__hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.card__state {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.card__path {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+  user-select: text;
+  cursor: text;
 }
