@@ -58,9 +58,10 @@ export function buildArgs(opts: TranscribeOptions, outputDir: string): string[] 
     '--model', opts.model,
     '--language', opts.language,
     '--diarize',
-    // Alignment is off per the spec: it costs a lot of time and the coarse
-    // segment boundaries it leaves are cleaned up in the tidy-up pass.
-    '--no_align',
+    // Alignment stays on. It is what produces per-word speakers, and those are
+    // the only place a speaker change inside a segment survives — whisperx
+    // itself collapses each segment to a single majority label.
+    // Roughly 1.9x realtime instead of 1.2x; M3 makes it a choice.
     '--min_speakers', String(opts.minSpeakers),
     '--max_speakers', String(opts.maxSpeakers),
     '--hf_token', opts.hfToken,
@@ -77,6 +78,97 @@ export function redactArgs(args: string[]): string[] {
   return args.map((a, n) => (n === i + 1 ? '••••' : a));
 }
 
+interface RawWord {
+  word?: string;
+  start?: number;
+  end?: number;
+  speaker?: string;
+}
+
+interface RawSegment {
+  start?: number;
+  end?: number;
+  text?: string;
+  speaker?: string;
+  words?: RawWord[];
+}
+
+// Punctuation that closes the sentence before it. Alignment hands the mark to
+// the next word, so a split leaves it stranded at the head of the reply:
+// "?想过。第二年…" instead of "…想过吗?".
+const TRAILING_PUNCTUATION = /^[\s，。！？；：、,.!?;:）)」』”’…]+/;
+
+/**
+ * Re-cuts whisperx's segments wherever the per-word speaker changes.
+ *
+ * whisperx labels a whole segment with one speaker, so a question and the
+ * answer that follows it in the same segment come back as one person. The
+ * word-level labels still record the change; this puts the boundaries back.
+ *
+ * Segments without word timings — alignment turned off — are kept as they are.
+ */
+function splitBySpeaker(rawSegments: RawSegment[]): Segment[] {
+  const out: Segment[] = [];
+  let current: Segment | null = null;
+  let lastSpeaker: string | undefined;
+
+  const flush = () => {
+    if (current && current.text.trim()) out.push({ ...current, text: current.text.trim() });
+    current = null;
+  };
+
+  for (const seg of rawSegments) {
+    const words = seg.words ?? [];
+
+    if (words.length === 0) {
+      flush();
+      out.push({
+        start: Number(seg.start ?? 0),
+        end: Number(seg.end ?? 0),
+        text: String(seg.text ?? '').trim(),
+        ...(seg.speaker ? { speaker: String(seg.speaker) } : {}),
+      });
+      continue;
+    }
+
+    for (const word of words) {
+      const text = String(word.word ?? '');
+      // Some words carry no label; they belong to whoever was speaking.
+      const speaker = word.speaker ?? lastSpeaker;
+
+      if (current && speaker === current.speaker) {
+        current.end = Number(word.end ?? current.end);
+        current.text += text;
+      } else {
+        // Punctuation opening a new speaker's turn closed the previous one.
+        const orphan: RegExpExecArray | null = current ? TRAILING_PUNCTUATION.exec(text) : null;
+        if (orphan && current) {
+          current.text += orphan[0];
+          flush();
+          const rest = text.slice(orphan[0].length);
+          if (!rest) {
+            lastSpeaker = speaker;
+            continue;
+          }
+        } else {
+          flush();
+        }
+
+        current = {
+          start: Number(word.start ?? seg.start ?? 0),
+          end: Number(word.end ?? seg.end ?? 0),
+          text: orphan ? text.slice(orphan[0].length) : text,
+          ...(speaker ? { speaker } : {}),
+        };
+      }
+      if (speaker) lastSpeaker = speaker;
+    }
+  }
+
+  flush();
+  return out;
+}
+
 function parseOutput(raw: string): TranscribeResult {
   let parsed: { segments?: unknown; language?: unknown };
   try {
@@ -89,15 +181,7 @@ function parseOutput(raw: string): TranscribeResult {
     throw new WhisperxError('whisperx output contains no segments.');
   }
 
-  const segments: Segment[] = parsed.segments.map((s) => {
-    const seg = s as Partial<Segment>;
-    return {
-      start: Number(seg.start ?? 0),
-      end: Number(seg.end ?? 0),
-      text: String(seg.text ?? '').trim(),
-      ...(seg.speaker ? { speaker: String(seg.speaker) } : {}),
-    };
-  });
+  const segments = splitBySpeaker(parsed.segments as RawSegment[]);
 
   return { segments, language: String(parsed.language ?? '') };
 }

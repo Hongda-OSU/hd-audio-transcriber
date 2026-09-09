@@ -1,22 +1,21 @@
 # hd-audio-transcriber
 
-Personal macOS Electron app: audio → transcript with speaker labels and timestamps. Not distributed.
+Personal macOS Electron app: audio → transcript with speaker labels and timestamps.
 
-Spec is in Notion, not this repo — fetch it before planning:
+Spec is in Notion, not this repo — read before planning:
 https://app.notion.com/p/3cc60d3cf9f381ddbb55dbdcc0b9d87a
 
 ## Rules
 
-- Never change the pinned versions in `setup_backend.sh` — torch 2.5.1, pyannote.audio 3.1.1, speechbrain 0.5.16, numpy<2 only work together.
-- Never bundle Python. Spawn `~/.transcriber-env/bin/whisperx`; if missing, point at `setup_backend.sh` — never crash.
+- Pin only whisperx in `setup_backend.sh`. Never pin torch, pyannote or numpy beneath it: torch under 2.6 blocks alignment, and without it a question and its answer return as one speaker.
+- Never bundle Python. Spawn whisperx from `~/.transcriber-env`; if missing, point at `setup_backend.sh` — never crash.
 - The HuggingFace token lives in `config.json` — never commit or log it.
 - whisperx's JSON is the only source of truth; exports derive from its `segments`.
-- `src/renderer/renderer.ts` is a classic script. An import emits CommonJS and breaks the page.
+- `src/renderer/renderer.ts` is a classic script. An import emits CommonJS and breaks it.
 - No bundler, no React — the complexity belongs in the main process.
 
 Out of scope: signing, notarization, App Store, auto-update, non-macOS, multi-user.
 
 ```bash
-npm start        # compile + launch
-npm run watch    # tsc --watch, then ⌘R in the app
+npm run dev    # compile, launch, reload on save
 ```
