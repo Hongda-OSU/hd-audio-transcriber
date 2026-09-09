@@ -114,7 +114,10 @@ dependencies, so there is nothing to bundle.
   beneath it, and torch under 2.6 makes `transformers` refuse to load the
   alignment model (CVE-2025-32434). Without alignment whisperx gives each
   segment one speaker, so a question and its answer come back as one person.
-- Speaker labels get fuzzy around question-and-answer boundaries. The cleanup pass fixes them.
+- Speakers come from splitting whisperx's per-word labels, not from the one it
+  puts on each segment — that one is a majority vote, so a question and the
+  answer sharing a segment came back as the same person. On the test interview
+  that turned 5 segments with a meaningless label into 12 with 12/12 correct.
 - The time estimate is rough — whisperx doesn't report fine-grained progress.
 - Long files are slow and memory-hungry. Stay plugged in, and consider `caffeinate -dimsu`.
 
