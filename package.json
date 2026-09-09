@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "A macOS app that turns audio into a transcript with speaker labels and timestamps",
   "private": true,
+  "license": "MIT",
   "main": "dist/main.js",
   "scripts": {
     "assets": "mkdir -p dist/renderer && cp src/renderer/index.html src/renderer/styles.css dist/renderer/",

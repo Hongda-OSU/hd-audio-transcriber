@@ -3,7 +3,7 @@
 A macOS app that turns audio into a transcript with speaker labels and timestamps.
 
 Drop in a file, get text. Edit the speaker names, export it.
-Personal tool — not distributed.
+Personal tool, MIT licensed.
 
 ## What it does
 
@@ -120,5 +120,3 @@ dependencies, so there is nothing to bundle.
   that turned 5 segments with a meaningless label into 12 with 12/12 correct.
 - The time estimate is rough — whisperx doesn't report fine-grained progress.
 - Long files are slow and memory-hungry. Stay plugged in, and consider `caffeinate -dimsu`.
-
-Full spec lives in [Notion](https://app.notion.com/p/3cc60d3cf9f381ddbb55dbdcc0b9d87a).
