@@ -99,8 +99,6 @@ body {
 .dropzone {
   -webkit-app-region: no-drag;
   appearance: none;
-  width: 100%;
-  max-width: 520px;
   min-height: 220px;
   display: flex;
   flex-direction: column;
@@ -170,8 +168,6 @@ body {
 /* --- file details ----------------------------------------------------- */
 
 .file {
-  width: 100%;
-  max-width: 520px;
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
