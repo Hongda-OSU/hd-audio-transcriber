@@ -181,17 +181,38 @@ async function runTranscription(): Promise<void> {
   renderResult(result);
 }
 
+const MASK = '••••••••••••••••';
+
+/**
+ * The field holds literal bullets, not the token, once one is stored. They
+ * select like real content, but selecting and copying yields bullets — the
+ * token itself never leaves the main process, so there is nothing here to
+ * leak. dataset.masked marks the value as a stand-in rather than input.
+ */
 async function refreshTokenState(): Promise<void> {
   const preview = await window.api.getTokenPreview();
 
-  // Dots in the field are the usual signal that a secret is stored. They are
-  // the placeholder, not the value: the real token never comes back to the
-  // renderer, and there is nothing here to save by accident.
-  tokenInput.placeholder = preview ? '••••••••••••••••' : 'hf_…';
+  if (preview) {
+    tokenInput.value = MASK;
+    tokenInput.dataset.masked = 'true';
+  } else {
+    tokenInput.value = '';
+    delete tokenInput.dataset.masked;
+  }
+  tokenInput.placeholder = 'hf_…';
   saveTokenButton.textContent = preview ? 'Replace' : 'Save';
 
   tokenState.textContent = preview ? `Saved · ${preview}` : 'Not set';
   tokenPath.textContent = await window.api.getConfigPath();
+}
+
+/** Typing over the stand-in clears it, so the bullets are never mixed into a
+ *  real value. */
+function clearMask(): void {
+  if (tokenInput.dataset.masked) {
+    tokenInput.value = '';
+    delete tokenInput.dataset.masked;
+  }
 }
 
 /** Saving cleared the field and changed one dim word, which read as nothing
@@ -260,9 +281,23 @@ startButton.addEventListener('click', () => {
   void runTranscription();
 });
 
+// Selecting is fine; taking a copy out is not. This blocks the stand-in
+// bullets and, more usefully, a real token sitting in the field before it is
+// saved. Paste stays allowed — that is how the token gets in.
+for (const event of ['copy', 'cut', 'dragstart'] as const) {
+  tokenInput.addEventListener(event, (e) => e.preventDefault());
+}
+
+tokenInput.addEventListener('beforeinput', clearMask);
+tokenInput.addEventListener('focus', () => {
+  // Selecting the bullets is fine; editing them is what has to start clean.
+  tokenInput.select();
+});
+
 saveTokenButton.addEventListener('click', () => {
   const value = tokenInput.value.trim();
-  if (!value) return;
+  // Saving the stand-in would store bullets as the token.
+  if (!value || tokenInput.dataset.masked) return;
   void window.api.setToken(value).then(async () => {
     tokenInput.value = '';
     await refreshTokenState();
