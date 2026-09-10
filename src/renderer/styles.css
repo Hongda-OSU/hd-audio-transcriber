@@ -483,12 +483,13 @@ body {
 
 /* --- options ------------------------------------------------------------ */
 
+.card--options {
+  padding: 14px 16px;
+}
+
 .options {
   display: flex;
   gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
   text-align: left;
 }
 
@@ -527,7 +528,7 @@ body {
 
 .toggle {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   margin-top: 12px;
   text-align: left;
@@ -539,13 +540,6 @@ body {
   accent-color: var(--accent);
 }
 
-.toggle__note {
-  display: block;
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--text-dim);
-  line-height: 1.5;
-}
 
 /* --- progress ----------------------------------------------------------- */
 
@@ -604,4 +598,84 @@ body {
   to {
     background-position: 20px 0;
   }
+}
+
+/* --- hint buttons ------------------------------------------------------- */
+/* The tip is a real element, not ::after: Chromium drops generated content on
+   <button>, which is why the first version of this rendered nothing. A native
+   title="" would have worked, but it is a light system panel with a one-second
+   delay — wrong in a dark window. */
+
+.hint {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  vertical-align: -2px;
+}
+
+.hint__button {
+  appearance: none;
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: default;
+}
+
+.hint__button svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.hint__button svg .hint__dot {
+  fill: currentColor;
+  stroke: none;
+}
+
+.hint__button:hover,
+.hint__button:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+.hint__tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+
+  width: max-content;
+  max-width: 260px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--elevated);
+  color: var(--text);
+
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 100ms ease;
+}
+
+.hint:hover .hint__tip,
+.hint__button:focus-visible ~ .hint__tip {
+  opacity: 1;
+}
+
+/* At 260px wide the first field's tip would hang off the window edge. */
+.options__field:first-child .hint__tip {
+  left: 0;
+  transform: none;
 }

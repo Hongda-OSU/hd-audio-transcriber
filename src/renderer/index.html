@@ -59,57 +59,54 @@
           <span class="dropzone__hint">or click to choose a file</span>
         </button>
 
+        <section class="card card--options">
+        <div class="options">
+          <label class="options__field">
+            <span class="options__label">Language<span class="hint"><button class="hint__button" type="button" aria-label="About the language setting"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Naming the language beats Detect: detection runs on the opening seconds and can be wrong on a quiet start.</span></span></span>
+            <select id="optLanguage" class="options__select">
+              <option value="zh">Chinese</option>
+              <option value="en">English</option>
+              <option value="ja">Japanese</option>
+              <option value="ko">Korean</option>
+              <option value="auto">Detect</option>
+            </select>
+          </label>
+
+          <label class="options__field">
+            <span class="options__label">Model<span class="hint"><button class="hint__button" type="button" aria-label="About the model choices"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">large-v3 is the most accurate. turbo is several times faster for a small loss. medium and small are for quick checks.</span></span></span>
+            <select id="optModel" class="options__select">
+              <option value="large-v3">large-v3</option>
+              <option value="large-v3-turbo">large-v3-turbo</option>
+              <option value="medium">medium</option>
+              <option value="small">small</option>
+            </select>
+          </label>
+
+          <label class="options__field">
+            <span class="options__label">Speakers<span class="hint"><button class="hint__button" type="button" aria-label="About the speaker count"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Pin the number when you know it — it is the strongest hint diarization gets. Detect lets it decide, which is worth using only when you are unsure.</span></span></span>
+            <select id="optSpeakers" class="options__select">
+              <option value="0">Detect</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="toggle">
+          <input id="optAlign" type="checkbox" />
+          <span>Word-level alignment</span><span class="hint"><button class="hint__button" type="button" aria-label="About word-level alignment"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Timestamps every word, which is the only place a speaker change inside a segment survives. Turn it off and a question and its answer come back as one person. Costs roughly 1.9x realtime instead of 1.2x.</span></span>
+        </label>
+        </section>
+
         <section id="file" class="file" hidden>
           <h2 id="fileName" class="file__name"></h2>
           <p id="fileMeta" class="file__meta"></p>
           <p id="filePath" class="file__path"></p>
 
-          <div class="options">
-            <label class="options__field">
-              <span class="options__label">Language</span>
-              <select id="optLanguage" class="options__select">
-                <option value="zh">Chinese</option>
-                <option value="en">English</option>
-                <option value="ja">Japanese</option>
-                <option value="ko">Korean</option>
-                <option value="auto">Detect</option>
-              </select>
-            </label>
-
-            <label class="options__field">
-              <span class="options__label">Model</span>
-              <select id="optModel" class="options__select">
-                <option value="large-v3">large-v3</option>
-                <option value="large-v3-turbo">large-v3-turbo</option>
-                <option value="medium">medium</option>
-                <option value="small">small</option>
-              </select>
-            </label>
-
-            <label class="options__field">
-              <span class="options__label">Speakers</span>
-              <select id="optSpeakers" class="options__select">
-                <option value="0">Detect</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-              </select>
-            </label>
-          </div>
-
-          <label class="toggle">
-            <input id="optAlign" type="checkbox" />
-            <span>
-              Word-level alignment
-              <span class="toggle__note">
-                Needed for accurate speakers. Off is faster, but every segment
-                gets a single speaker.
-              </span>
-            </span>
-          </label>
 
           <button id="start" class="button" type="button">Transcribe</button>
         </section>
