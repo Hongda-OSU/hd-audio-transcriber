@@ -65,13 +65,22 @@
     <main class="stage">
       <section id="panelTranscribe" class="column" role="tabpanel" aria-labelledby="tabTranscribe">
         <button id="dropzone" class="dropzone" type="button">
-          <svg class="dropzone__icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 3v12" />
-            <path d="M7 10l5 5 5-5" />
-            <path d="M4 20h16" />
-          </svg>
-          <span class="dropzone__title">Drop audio here</span>
-          <span class="dropzone__hint">or click to choose a file</span>
+          <span id="dropEmpty" class="dropzone__empty">
+            <svg class="dropzone__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3v12" />
+              <path d="M7 10l5 5 5-5" />
+              <path d="M4 20h16" />
+            </svg>
+            <span class="dropzone__title">Drop audio here</span>
+            <span class="dropzone__hint">or click to choose a file</span>
+          </span>
+
+          <span id="dropFile" class="dropzone__file" hidden>
+            <span id="fileName" class="file__name"></span>
+            <span id="fileMeta" class="file__meta"></span>
+            <span id="filePath" class="file__path"></span>
+            <span class="dropzone__replace">Drop another file to replace it</span>
+          </span>
         </button>
 
         <section class="card card--options">
@@ -117,14 +126,10 @@
         </label>
         </section>
 
-        <section id="file" class="file" hidden>
-          <h2 id="fileName" class="file__name"></h2>
-          <p id="fileMeta" class="file__meta"></p>
-          <p id="filePath" class="file__path"></p>
 
-
-          <button id="start" class="button" type="button">Transcribe</button>
-        </section>
+        <button id="start" class="button button--primary" type="button" hidden>
+          Transcribe
+        </button>
 
         <section id="progress" class="progress" hidden>
           <div class="progress__head">

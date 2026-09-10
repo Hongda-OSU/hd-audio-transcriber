@@ -2,7 +2,8 @@ const dropzone = document.getElementById('dropzone') as HTMLButtonElement;
 const statusLine = document.getElementById('status') as HTMLParagraphElement;
 const logLine = document.getElementById('log') as HTMLParagraphElement;
 
-const fileSection = document.getElementById('file') as HTMLElement;
+const dropEmpty = document.getElementById('dropEmpty') as HTMLElement;
+const dropFile = document.getElementById('dropFile') as HTMLElement;
 const fileName = document.getElementById('fileName') as HTMLElement;
 const fileMeta = document.getElementById('fileMeta') as HTMLElement;
 const filePathEl = document.getElementById('filePath') as HTMLElement;
@@ -81,17 +82,28 @@ function clearStatus(): void {
   statusLine.hidden = true;
 }
 
+/** The dropzone is the file card: once something is loaded, the prompt would
+ *  just be a second copy of an invitation already accepted. */
 function showFile(info: AudioInfo): void {
   current = info;
   fileName.textContent = info.name;
   fileMeta.textContent = [formatDuration(info.durationSec), formatSize(info.sizeBytes)].join(' · ');
   filePathEl.textContent = info.path;
-  fileSection.hidden = false;
+
+  dropEmpty.hidden = true;
+  dropFile.hidden = false;
+  dropzone.classList.add('is-loaded');
+  // Hidden rather than disabled: with nothing loaded there is no action to
+  // offer, and a greyed-out button is just something to wonder about.
+  startButton.hidden = false;
 }
 
 function clearFile(): void {
   current = null;
-  fileSection.hidden = true;
+  dropEmpty.hidden = false;
+  dropFile.hidden = true;
+  dropzone.classList.remove('is-loaded');
+  startButton.hidden = true;
 }
 
 function clearResult(): void {
