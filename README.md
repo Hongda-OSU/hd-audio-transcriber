@@ -57,6 +57,11 @@ npm start       # compiles TypeScript, then launches the app
 `npm run dev` compiles, launches, and reloads on save — the renderer refreshes,
 and a main-process change relaunches the app.
 
+While a transcription is running it does neither, and says
+`[dev] reload deferred` until the run ends. A reload would destroy the promise
+waiting on the result, and a relaunch would kill whisperx outright; an hour of
+audio takes about two hours, which is a lot to lose to an edit.
+
 ```bash
 npm run build       # compile to dist/
 npm run typecheck   # types only, no output
