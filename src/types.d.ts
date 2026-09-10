@@ -47,6 +47,8 @@ interface TranscribeProgress {
 interface TranscribeResult {
   segments: Segment[];
   language: string;
+  /** Where whisperx's own JSON was kept, so a run survives the window. */
+  savedTo?: string;
 }
 
 /** IPC handlers return this instead of rejecting, so the UI can show the text. */

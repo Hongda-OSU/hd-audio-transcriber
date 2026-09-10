@@ -774,3 +774,16 @@ body {
 .tabs__tab:disabled:hover {
   color: var(--text-dim);
 }
+
+/* Where the run was filed. Selectable — the point is to be able to go there. */
+.result__saved {
+  margin: 20px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+  user-select: text;
+  cursor: text;
+}

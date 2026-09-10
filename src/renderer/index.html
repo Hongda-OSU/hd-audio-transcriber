@@ -67,8 +67,8 @@
         </button>
         <span class="hint__tip" role="tooltip"
           >⌘R starts over — it reloads the window and clears the file and
-          transcript. ⌘O opens a file. Nothing is written to disk yet, so a
-          reload throws the transcript away.</span
+          transcript. ⌘O opens a file. Finished runs are kept on disk; the
+          Transcript tab says where.</span
         >
       </span>
     </header>
@@ -166,6 +166,7 @@
               <span id="resultMeta" class="result__meta"></span>
             </div>
             <ol id="segments" class="segments"></ol>
+          <p id="savedTo" class="result__saved" hidden></p>
           </section>
       </section>
 

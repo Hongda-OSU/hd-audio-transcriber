@@ -54,6 +54,14 @@ export function tokenFile(): string {
   return configPath();
 }
 
+/**
+ * Where finished transcripts are kept. Alongside the token rather than in the
+ * repo: a packaged .app has no repo, and this may hold interview content.
+ */
+export function transcriptsDir(): string {
+  return join(app.getPath('userData'), 'transcripts');
+}
+
 export function getSettings(): TranscribeSettings {
   return { ...DEFAULTS, ...read().settings };
 }

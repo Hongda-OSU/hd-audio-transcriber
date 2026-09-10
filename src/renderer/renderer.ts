@@ -43,6 +43,7 @@ const progressBar = document.getElementById('progressBar') as HTMLElement;
 
 const resultMeta = document.getElementById('resultMeta') as HTMLElement;
 const segmentList = document.getElementById('segments') as HTMLOListElement;
+const savedTo = document.getElementById('savedTo') as HTMLElement;
 
 /** The file currently loaded, and the input to a transcription run. */
 let current: AudioInfo | null = null;
@@ -156,6 +157,11 @@ function renderResult(result: TranscribeResult): void {
     plural(speakers.size, 'speaker'),
     ...(result.language ? [result.language] : []),
   ].join(' · ');
+
+  // Saying where it went is the difference between a file existing and the
+  // user knowing a run survives the window.
+  savedTo.textContent = result.savedTo ? `Saved to ${result.savedTo}` : '';
+  savedTo.hidden = !result.savedTo;
 
   TABS.transcript.tab.disabled = false;
 }

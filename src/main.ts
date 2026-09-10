@@ -4,7 +4,15 @@ import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 
 import { probeAudio } from './lib/probe';
 import { cancel, isRunning, transcribe, WhisperxError } from './lib/whisperx';
-import { getSettings, getToken, setSettings, setToken, tokenFile, tokenPreview } from './lib/config';
+import {
+  getSettings,
+  getToken,
+  setSettings,
+  setToken,
+  tokenFile,
+  tokenPreview,
+  transcriptsDir,
+} from './lib/config';
 
 // The identifier, not the display name — it decides where userData lives, and
 // the saved token is already under this one. Renaming it would strand that
@@ -150,10 +158,13 @@ ipcMain.handle(
       // Remember what was used, so the next run opens on the same choices.
       setSettings(settings);
 
-      return await transcribe({ file: filePath, hfToken, ...settings }, (progress) => {
-        // The window can be gone by the time a late update arrives.
-        if (!event.sender.isDestroyed()) event.sender.send('transcribe:progress', progress);
-      });
+      return await transcribe(
+        { file: filePath, hfToken, archiveDir: transcriptsDir(), ...settings },
+        (progress) => {
+          // The window can be gone by the time a late update arrives.
+          if (!event.sender.isDestroyed()) event.sender.send('transcribe:progress', progress);
+        },
+      );
     } catch (err) {
       if (err instanceof WhisperxError) return { error: err.message };
       return { error: `Transcription failed: ${(err as Error).message}` };

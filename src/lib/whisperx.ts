@@ -1,5 +1,5 @@
 import { accessSync, constants } from 'node:fs';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, extname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -22,6 +22,12 @@ export class WhisperxError extends Error {}
 export interface TranscribeOptions extends TranscribeSettings {
   file: string;
   hfToken: string;
+  /**
+   * Where to keep whisperx's own JSON. Passed in rather than resolved here so
+   * this module stays free of Electron. Without it a run leaves nothing behind:
+   * the temp directory is deleted and the result lives only in the window.
+   */
+  archiveDir?: string;
 }
 
 // The lines whisperx prints when it moves on. Only the first reports a
@@ -302,7 +308,25 @@ export async function transcribe(
       throw new WhisperxError(`whisperx finished but left no ${stem}.json.`);
     }
 
-    return parseOutput(raw);
+    // Written before the temp directory goes. This is the authoritative
+    // output — it carries the per-word speakers the UI does not show — so
+    // every export and every cleanup pass can be redone from it without
+    // spending another two hours on the audio.
+    let savedTo: string | undefined;
+    if (opts.archiveDir) {
+      try {
+        await mkdir(opts.archiveDir, { recursive: true });
+        const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
+        savedTo = join(opts.archiveDir, `${stem}-${stamp}.json`);
+        await writeFile(savedTo, raw, { mode: 0o600 });
+      } catch {
+        // A transcript that cannot be filed is still a transcript; the window
+        // has it either way.
+        savedTo = undefined;
+      }
+    }
+
+    return { ...parseOutput(raw), ...(savedTo ? { savedTo } : {}) };
   } finally {
     await rm(outputDir, { recursive: true, force: true });
   }

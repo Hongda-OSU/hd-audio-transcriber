@@ -114,8 +114,10 @@ Three tabs, centred in the title bar.
   takes you there.
 - **Settings** — the HuggingFace token, and a note on what the options cost.
 
-Nothing is written to disk yet, so ⌘R clears the transcript along with
-everything else. Export is M4.
+Every finished run keeps whisperx's own JSON — per-word speakers and all — in
+`~/Library/Application Support/hd-audio-transcriber/transcripts/`, and the
+Transcript tab says where. ⌘R clears the window, not that file. Export is M4,
+and it will read from there rather than asking for the audio again.
 
 ## Status
 
