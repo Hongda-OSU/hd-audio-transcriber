@@ -315,11 +315,10 @@ body {
 
 /* --- results ----------------------------------------------------------- */
 
+/* No card: the transcript is the only thing in its tab, so a border here just
+   draws a box around the whole view. */
 .result {
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  padding: 0;
 }
 
 .result__head {
@@ -327,7 +326,9 @@ body {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
 .result__title {
@@ -348,7 +349,7 @@ body {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
 .segment {
