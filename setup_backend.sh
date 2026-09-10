@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================
-#  Audio Transcriber · backend installer (setup_backend.sh)
+#  HD Audio Transcriber · backend installer (setup_backend.sh)
 #  Builds the whisperx environment the app spawns. Run once per machine:
 #      bash setup_backend.sh
 # =============================================================
@@ -21,7 +21,7 @@ PY_MAX_MINOR=13
 VENV="${TRANSCRIBER_ENV:-$HOME/.transcriber-env}"
 
 echo "=============================================="
-echo "  Audio Transcriber · backend installer"
+echo "  HD Audio Transcriber · backend installer"
 echo "=============================================="
 
 # ---- 0. Is the target already built? ----

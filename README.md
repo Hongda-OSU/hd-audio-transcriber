@@ -1,4 +1,4 @@
-# 🎙️ hd-audio-transcriber
+# 🎙️ HD Audio Transcriber
 
 A macOS app that turns audio into a transcript with speaker labels and timestamps.
 

@@ -6,8 +6,10 @@ import { probeAudio } from './lib/probe';
 import { cancel, transcribe, WhisperxError } from './lib/whisperx';
 import { getSettings, getToken, setSettings, setToken, tokenFile, tokenPreview } from './lib/config';
 
-// Set before anything reads app.getPath('userData'), or the config lands in the
-// folder every unpackaged Electron app shares.
+// The identifier, not the display name — it decides where userData lives, and
+// the saved token is already under this one. Renaming it would strand that
+// file. Set before anything reads app.getPath('userData'), or the config lands
+// in the folder every unpackaged Electron app shares.
 app.setName('hd-audio-transcriber');
 
 function createWindow(): BrowserWindow {
