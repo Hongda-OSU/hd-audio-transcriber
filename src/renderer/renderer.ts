@@ -93,9 +93,7 @@ function showFile(info: AudioInfo): void {
   dropEmpty.hidden = true;
   dropFile.hidden = false;
   dropzone.classList.add('is-loaded');
-  // Hidden rather than disabled: with nothing loaded there is no action to
-  // offer, and a greyed-out button is just something to wonder about.
-  startButton.hidden = false;
+  startButton.disabled = false;
 }
 
 function clearFile(): void {
@@ -103,7 +101,9 @@ function clearFile(): void {
   dropEmpty.hidden = false;
   dropFile.hidden = true;
   dropzone.classList.remove('is-loaded');
-  startButton.hidden = true;
+  // Disabled rather than hidden: it shares a row with the alignment toggle, and
+  // removing it would shuffle that row every time a file is loaded or cleared.
+  startButton.disabled = true;
 }
 
 function clearResult(): void {
@@ -148,7 +148,7 @@ function renderResult(result: TranscribeResult): void {
 
 function setBusy(value: boolean): void {
   busy = value;
-  startButton.disabled = value;
+  startButton.disabled = value || !current;
   startButton.textContent = value ? 'Transcribing…' : 'Transcribe';
   dropzone.classList.toggle('is-disabled', value);
 }
