@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 
 import { probeAudio } from './lib/probe';
-import { cancel, transcribe, WhisperxError } from './lib/whisperx';
+import { cancel, isRunning, transcribe, WhisperxError } from './lib/whisperx';
 import { getSettings, getToken, setSettings, setToken, tokenFile, tokenPreview } from './lib/config';
 
 // The identifier, not the display name — it decides where userData lives, and
@@ -49,20 +49,32 @@ function watchForReload(win: BrowserWindow): void {
   let timer: NodeJS.Timeout | undefined;
   let mainChanged = false;
 
+  const apply = () => {
+    // Never interrupt a run for a code edit. Reloading destroys the renderer
+    // and with it the promise waiting on the result, while a relaunch calls
+    // cancel() and kills whisperx outright — either one throws away work that
+    // can be hours old, and neither leaves a trace of why.
+    if (isRunning()) {
+      console.log('[dev] reload deferred — a transcription is running');
+      timer = setTimeout(apply, 2000);
+      return;
+    }
+
+    if (mainChanged) {
+      cancel();
+      app.relaunch();
+      app.exit(0);
+    } else if (!win.isDestroyed()) {
+      win.webContents.reloadIgnoringCache();
+    }
+    mainChanged = false;
+  };
+
   const settle = () => {
     // tsc rewrites several files in a burst; act once it settles, or the app
     // relaunches mid-compile and loads a half-written dist.
     clearTimeout(timer);
-    timer = setTimeout(() => {
-      if (mainChanged) {
-        cancel();
-        app.relaunch();
-        app.exit(0);
-      } else if (!win.isDestroyed()) {
-        win.webContents.reloadIgnoringCache();
-      }
-      mainChanged = false;
-    }, 250);
+    timer = setTimeout(apply, 250);
   };
 
   // Compiled output: tsc --watch writes here.

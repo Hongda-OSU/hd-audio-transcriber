@@ -205,6 +205,12 @@ function parseOutput(raw: string): TranscribeResult {
 
 let running: ChildProcess | null = null;
 
+/** Whether a run is in flight. Development reloads check this before throwing
+ *  away a transcription that may be hours in. */
+export function isRunning(): boolean {
+  return running !== null;
+}
+
 /** Kills an in-flight run. Called when the window closes, so a long job does
  *  not keep burning CPU after the app is gone. */
 export function cancel(): void {
