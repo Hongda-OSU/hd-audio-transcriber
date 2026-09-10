@@ -744,8 +744,22 @@ body {
 
 /* --- primary button ----------------------------------------------------- */
 
-.button--primary {
-  align-self: center;
+/* The action sits with the settings it acts on, filling the space the
+   alignment row was leaving empty on its right. */
+.options__action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.options__action .toggle {
   margin-top: 0;
-  padding: 9px 28px;
+}
+
+.button--primary {
+  flex: 0 0 auto;
+  margin-top: 0;
+  padding: 8px 24px;
 }
