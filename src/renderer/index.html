@@ -35,6 +35,17 @@
           Transcribe
         </button>
         <button
+          id="tabTranscript"
+          class="tabs__tab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panelTranscript"
+          disabled
+        >
+          Transcript
+        </button>
+        <button
           id="tabSettings"
           class="tabs__tab"
           type="button"
@@ -146,13 +157,16 @@
         <p id="status" class="status" hidden></p>
         <p id="log" class="log" hidden></p>
 
-        <section id="result" class="result" hidden>
-          <div class="result__head">
-            <h2 class="result__title">Transcript</h2>
-            <span id="resultMeta" class="result__meta"></span>
-          </div>
-          <ol id="segments" class="segments"></ol>
-        </section>
+      </section>
+
+      <section id="panelTranscript" class="column" role="tabpanel" aria-labelledby="tabTranscript" hidden>
+  <section class="result">
+            <div class="result__head">
+              <h2 class="result__title">Transcript</h2>
+              <span id="resultMeta" class="result__meta"></span>
+            </div>
+            <ol id="segments" class="segments"></ol>
+          </section>
       </section>
 
       <section id="panelSettings" class="column" role="tabpanel" aria-labelledby="tabSettings" hidden>

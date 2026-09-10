@@ -9,10 +9,22 @@ const fileMeta = document.getElementById('fileMeta') as HTMLElement;
 const filePathEl = document.getElementById('filePath') as HTMLElement;
 const startButton = document.getElementById('start') as HTMLButtonElement;
 
-const tabTranscribe = document.getElementById('tabTranscribe') as HTMLButtonElement;
-const tabSettings = document.getElementById('tabSettings') as HTMLButtonElement;
-const panelTranscribe = document.getElementById('panelTranscribe') as HTMLElement;
-const panelSettings = document.getElementById('panelSettings') as HTMLElement;
+type TabName = 'transcribe' | 'transcript' | 'settings';
+
+const TABS: Record<TabName, { tab: HTMLButtonElement; panel: HTMLElement }> = {
+  transcribe: {
+    tab: document.getElementById('tabTranscribe') as HTMLButtonElement,
+    panel: document.getElementById('panelTranscribe') as HTMLElement,
+  },
+  transcript: {
+    tab: document.getElementById('tabTranscript') as HTMLButtonElement,
+    panel: document.getElementById('panelTranscript') as HTMLElement,
+  },
+  settings: {
+    tab: document.getElementById('tabSettings') as HTMLButtonElement,
+    panel: document.getElementById('panelSettings') as HTMLElement,
+  },
+};
 
 const tokenInput = document.getElementById('token') as HTMLInputElement;
 const saveTokenButton = document.getElementById('saveToken') as HTMLButtonElement;
@@ -29,7 +41,6 @@ const progressPhase = document.getElementById('progressPhase') as HTMLElement;
 const progressPercent = document.getElementById('progressPercent') as HTMLElement;
 const progressBar = document.getElementById('progressBar') as HTMLElement;
 
-const resultSection = document.getElementById('result') as HTMLElement;
 const resultMeta = document.getElementById('resultMeta') as HTMLElement;
 const segmentList = document.getElementById('segments') as HTMLOListElement;
 
@@ -107,8 +118,10 @@ function clearFile(): void {
 }
 
 function clearResult(): void {
-  resultSection.hidden = true;
   segmentList.replaceChildren();
+  TABS.transcript.tab.disabled = true;
+  // A tab with nothing behind it should not be where the user is standing.
+  if (!TABS.transcript.panel.hidden) showTab('transcribe');
 }
 
 function renderResult(result: TranscribeResult): void {
@@ -143,7 +156,8 @@ function renderResult(result: TranscribeResult): void {
     plural(speakers.size, 'speaker'),
     ...(result.language ? [result.language] : []),
   ].join(' · ');
-  resultSection.hidden = false;
+
+  TABS.transcript.tab.disabled = false;
 }
 
 function setBusy(value: boolean): void {
@@ -246,6 +260,8 @@ async function runTranscription(): Promise<void> {
   clearStatus();
   logLine.hidden = true;
   renderResult(result);
+  // The run is over and the transcript is the point of it.
+  showTab('transcript');
 }
 
 const MASK = '••••••••••••••••';
@@ -294,16 +310,13 @@ function flashTokenState(): void {
 
 /* --- tabs -------------------------------------------------------------- */
 
-function showTab(which: 'transcribe' | 'settings'): void {
-  const settings = which === 'settings';
-
-  panelTranscribe.hidden = settings;
-  panelSettings.hidden = !settings;
-
-  tabTranscribe.classList.toggle('is-active', !settings);
-  tabSettings.classList.toggle('is-active', settings);
-  tabTranscribe.setAttribute('aria-selected', String(!settings));
-  tabSettings.setAttribute('aria-selected', String(settings));
+function showTab(which: TabName): void {
+  for (const [name, { tab, panel }] of Object.entries(TABS)) {
+    const active = name === which;
+    panel.hidden = !active;
+    tab.classList.toggle('is-active', active);
+    tab.setAttribute('aria-selected', String(active));
+  }
 }
 
 /* --- drag and drop ----------------------------------------------------- */
@@ -388,8 +401,9 @@ window.api.onProgress((progress) => {
   logLine.textContent = progress.line;
 });
 
-tabTranscribe.addEventListener('click', () => showTab('transcribe'));
-tabSettings.addEventListener('click', () => showTab('settings'));
+for (const [name, { tab }] of Object.entries(TABS)) {
+  tab.addEventListener('click', () => showTab(name as TabName));
+}
 
 void refreshTokenState();
 void window.api.getSettings().then(applySettings);

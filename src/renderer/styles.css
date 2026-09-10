@@ -763,3 +763,13 @@ body {
   margin-top: 0;
   padding: 8px 24px;
 }
+
+/* A tab with nothing behind it yet. */
+.tabs__tab:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tabs__tab:disabled:hover {
+  color: var(--text-dim);
+}
