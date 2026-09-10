@@ -679,3 +679,18 @@ body {
   left: 0;
   transform: none;
 }
+
+/* The title bar is a drag region, so the button has to opt out of it, and its
+   tip hangs below rather than above — there is no room above. */
+.hint--titlebar {
+  -webkit-app-region: no-drag;
+  margin-left: auto;
+}
+
+.hint--titlebar .hint__tip {
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: auto;
+  right: 0;
+  transform: none;
+}

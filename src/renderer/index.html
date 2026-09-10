@@ -45,6 +45,21 @@
           Settings
         </button>
       </nav>
+
+      <span class="hint hint--titlebar">
+        <button class="hint__button" type="button" aria-label="Keyboard shortcuts">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.25" />
+            <path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" />
+            <circle cx="8" cy="12.1" r="0.55" class="hint__dot" />
+          </svg>
+        </button>
+        <span class="hint__tip" role="tooltip"
+          >⌘R starts over — it reloads the window and clears the file and
+          transcript. ⌘O opens a file. Nothing is written to disk yet, so a
+          reload throws the transcript away.</span
+        >
+      </span>
     </header>
 
     <main class="stage">
