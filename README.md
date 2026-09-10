@@ -82,10 +82,11 @@ src/preload.ts          IPC bridge to the renderer
 src/types.d.ts          Shapes shared by main, preload and renderer
 src/lib/probe.ts        ffprobe → duration and container format
 src/lib/whisperx.ts     Options → command → segments
-src/lib/exporters.ts    Segments → txt / srt / vtt / docx
-src/renderer/           UI: import, options, progress, results, export
+src/lib/config.ts       The token and the remembered options
+src/renderer/           UI: three tabs, described below
 dist/                   Compiled output, git-ignored
 setup_backend.sh        Backend installer
+scripts/dev.sh          Compile, launch, reload on save
 scripts/make-samples.sh Regenerates samples/ — test audio and its transcript
 build/make-icon.sh      Regenerates icon.png and icon.icns from icon-source.png
 ```
@@ -96,6 +97,20 @@ produce it. Keeping generated files in the repo lets them drift from the source
 
 TypeScript compiles with `tsc` alone — no bundler. The renderer has no npm
 dependencies, so there is nothing to bundle.
+
+## The window
+
+Three tabs, centred in the title bar.
+
+- **Transcribe** — the dropzone, which turns into a card describing the file
+  once one is loaded, then language, model, speaker count and alignment, and
+  the button. Progress appears here while a run is going.
+- **Transcript** — the result. Disabled until a run produces one; finishing
+  takes you there.
+- **Settings** — the HuggingFace token, and a note on what the options cost.
+
+Nothing is written to disk yet, so ⌘R clears the transcript along with
+everything else. Export is M4.
 
 ## Status
 
