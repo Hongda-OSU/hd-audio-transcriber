@@ -211,8 +211,11 @@ body {
 }
 
 .stage {
-  justify-content: flex-start;
-  padding-top: 24px;
+  /* `safe` matters: plain centring clips the top of a long transcript and puts
+     it out of scroll reach. This centres while the content fits and falls back
+     to top-aligned once it does not. */
+  justify-content: safe center;
+  padding: 24px 32px 32px;
   overflow-y: auto;
 }
 
