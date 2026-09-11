@@ -3,6 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 
+import { listRuns, readArchive, recordRun } from './lib/archive';
 import { EXTENSIONS, render } from './lib/exporters';
 import { probeAudio } from './lib/probe';
 import { cancel, isRunning, transcribe, WhisperxCancelled, WhisperxError } from './lib/whisperx';
@@ -150,7 +151,7 @@ ipcMain.handle('config:setSettings', (_event, settings: TranscribeSettings) => s
  * every word across the bridge only to have it sent back would be a round trip
  * for data the window never shows.
  */
-let lastRun: { result: TranscribeResult; audioPath: string } | null = null;
+let lastRun: { result: TranscribeResult; audioPath?: string } | null = null;
 
 /**
  * Paths this process has told the window about. Revealing one only opens
@@ -203,7 +204,18 @@ ipcMain.handle(
       );
 
       lastRun = { result, audioPath: filePath };
-      if (result.savedTo) revealable.add(result.savedTo);
+      if (result.savedTo) {
+        revealable.add(result.savedTo);
+        // The JSON itself says none of this, and without it a folder of runs
+        // is a list of timestamps.
+        await recordRun(transcriptsDir(), basename(result.savedTo), {
+          audio: filePath,
+          settings,
+          ...(result.elapsedSec ? { elapsedSec: result.elapsedSec } : {}),
+          segments: result.segments.length,
+          speakers: new Set(result.segments.map((s) => s.speaker).filter(Boolean)).size,
+        });
+      }
       return withoutWords(result);
     } catch (err) {
       // Stopping is something the user did, not something that went wrong.
@@ -211,6 +223,40 @@ ipcMain.handle(
       if (err instanceof WhisperxError) return { error: err.message };
       return { error: `Transcription failed: ${(err as Error).message}` };
     }
+  },
+);
+
+ipcMain.handle('transcripts:list', (): Promise<ArchivedRun[]> => listRuns(transcriptsDir()));
+
+ipcMain.handle(
+  'transcripts:open',
+  async (_event, target: string): Promise<TranscribeResult | IpcFailure> => {
+    // The renderer names the file, so main decides whether it may be read.
+    // Only what the app itself wrote, and only from the folder it wrote it to.
+    const runs = await listRuns(transcriptsDir());
+    const run = runs.find((r) => r.path === target);
+    if (!run) return { error: 'That transcript is no longer in the folder.' };
+
+    let result: TranscribeResult;
+    try {
+      result = await readArchive(run.path);
+    } catch (err) {
+      return { error: `Could not read ${run.file}: ${(err as Error).message}` };
+    }
+
+    // Opening it is what export acts on, so the rest of the app needs no idea
+    // where a transcript came from.
+    lastRun = { result, ...(run.audio ? { audioPath: run.audio } : {}) };
+    revealable.add(run.path);
+
+    // A run from before the index existed learns this much by being opened.
+    await recordRun(transcriptsDir(), run.file, {
+      segments: result.segments.length,
+      speakers: new Set(result.segments.map((s) => s.speaker).filter(Boolean)).size,
+      ...(run.names ? { names: run.names } : {}),
+    });
+
+    return withoutWords(result);
   },
 );
 
@@ -234,11 +280,14 @@ ipcMain.handle(
     if (!extension) return { error: `Unknown export format: ${format}` };
 
     const { result, audioPath } = lastRun;
-    const stem = basename(audioPath, extname(audioPath));
-
-    // Next to the recording, which is where the person who has both of them
-    // is already looking.
-    const suggested = join(dirname(audioPath), `${stem}.${extension}`);
+    // Next to the recording, which is where the person who has both of them is
+    // already looking. An archived run may not remember where its audio was,
+    // and the archive folder itself is hidden, so that falls back to Documents.
+    const stem = audioPath
+      ? basename(audioPath, extname(audioPath))
+      : basename(result.savedTo ?? 'transcript', '.json');
+    const folder = audioPath ? dirname(audioPath) : app.getPath('documents');
+    const suggested = join(folder, `${stem}.${extension}`);
     const win = BrowserWindow.fromWebContents(event.sender);
 
     const { canceled, filePath } = await (win

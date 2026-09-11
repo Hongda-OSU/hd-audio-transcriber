@@ -45,6 +45,13 @@ const resultMeta = document.getElementById('resultMeta') as HTMLElement;
 const segmentList = document.getElementById('segments') as HTMLOListElement;
 const savedTo = document.getElementById('savedTo') as HTMLElement;
 
+const transcriptList = document.getElementById('transcriptList') as HTMLElement;
+const transcriptResult = document.getElementById('transcriptResult') as HTMLElement;
+const runList = document.getElementById('runs') as HTMLOListElement;
+const runsMeta = document.getElementById('runsMeta') as HTMLElement;
+const runsEmpty = document.getElementById('runsEmpty') as HTMLElement;
+const backToRuns = document.getElementById('backToRuns') as HTMLButtonElement;
+
 const speakerFields = document.getElementById('speakerFields') as HTMLElement;
 const exportFormat = document.getElementById('exportFormat') as HTMLSelectElement;
 const exportButton = document.getElementById('export') as HTMLButtonElement;
@@ -168,15 +175,89 @@ function clearFile(): void {
   startButton.disabled = true;
 }
 
+/** The tab shows one of two things: a transcript, or the folder of them. */
+function showResultView(): void {
+  transcriptList.hidden = true;
+  transcriptResult.hidden = false;
+}
+
+function showRunsView(): void {
+  transcriptResult.hidden = true;
+  transcriptList.hidden = false;
+}
+
 function clearResult(): void {
   segmentList.replaceChildren();
   speakerFields.replaceChildren();
   speakerFields.hidden = true;
   speakerNames = {};
   exportState.hidden = true;
-  TABS.transcript.tab.disabled = true;
-  // A tab with nothing behind it should not be where the user is standing.
-  if (!TABS.transcript.panel.hidden) showTab('transcribe');
+  savedTo.hidden = true;
+  // The tab is never empty any more — behind it is everything ever run.
+  showRunsView();
+}
+
+/** stem-2026-09-11-04-22-10.json → stem. The date is its own column. */
+function runTitle(file: string): string {
+  return file.replace(/-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.json$/, '').replace(/\.json$/, '');
+}
+
+function renderRuns(runs: ArchivedRun[]): void {
+  runList.replaceChildren();
+
+  for (const run of runs) {
+    const item = document.createElement('li');
+    item.className = 'run';
+
+    const open = document.createElement('button');
+    open.className = 'run__open';
+    open.type = 'button';
+    open.addEventListener('click', () => void openRun(run));
+
+    const name = document.createElement('span');
+    name.className = 'run__name';
+    name.textContent = runTitle(run.file);
+
+    const when = document.createElement('span');
+    when.className = 'run__when';
+    when.textContent = run.savedAt;
+
+    // Runs made before the index existed know nothing about themselves; the
+    // line is shorter rather than padded with unknowns.
+    const facts: string[] = [];
+    if (run.segments) facts.push(`${run.segments} segment${run.segments === 1 ? '' : 's'}`);
+    if (run.speakers) facts.push(`${run.speakers} speaker${run.speakers === 1 ? '' : 's'}`);
+    if (run.elapsedSec) facts.push(`${formatElapsed(run.elapsedSec)} runtime`);
+
+    const meta = document.createElement('span');
+    meta.className = 'run__meta';
+    meta.textContent = facts.join(' · ');
+
+    open.append(name, when, meta);
+    item.append(open);
+    runList.append(item);
+  }
+
+  runsEmpty.hidden = runs.length > 0;
+  runsMeta.textContent = runs.length ? `${runs.length} run${runs.length === 1 ? '' : 's'}` : '';
+}
+
+async function refreshRuns(): Promise<void> {
+  renderRuns(await window.api.listTranscripts());
+}
+
+/** Opening a past run puts the app in exactly the state a finished one does,
+ *  export included — main keeps the transcript either way. */
+async function openRun(run: ArchivedRun): Promise<void> {
+  const result = await window.api.openTranscript(run.path);
+
+  if ('error' in result) {
+    runsMeta.textContent = result.error;
+    return;
+  }
+
+  speakerNames = { ...run.names };
+  renderResult(result);
 }
 
 /** Renaming is worth doing once for a whole interview and never worth doing
@@ -272,7 +353,7 @@ function renderResult(result: TranscribeResult): void {
   else savedTo.hidden = true;
 
   renderSpeakerFields(result.segments);
-  TABS.transcript.tab.disabled = false;
+  showResultView();
 }
 
 /**
@@ -565,8 +646,21 @@ window.api.onProgress((progress) => {
 });
 
 for (const [name, { tab }] of Object.entries(TABS)) {
-  tab.addEventListener('click', () => showTab(name as TabName));
+  tab.addEventListener('click', () => {
+    showTab(name as TabName);
+    // Read fresh every time: a run may have finished, or a file been deleted
+    // in Finder, since the last look.
+    if (name === 'transcript' && transcriptResult.hidden) void refreshRuns();
+  });
 }
+
+backToRuns.addEventListener('click', () => {
+  showRunsView();
+  void refreshRuns();
+});
+
+// The tab opens on the folder until a run fills it.
+showRunsView();
 
 void refreshTokenState();
 void window.api.getSettings().then(applySettings);

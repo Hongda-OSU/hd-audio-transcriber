@@ -67,6 +67,26 @@ interface TranscribeResult {
   elapsedSec?: number;
 }
 
+/**
+ * One past run, as the transcripts folder remembers it. Everything but the
+ * file, its path and when it was saved is optional: the runs made before the
+ * index existed know nothing about themselves.
+ */
+interface ArchivedRun {
+  /** The archive file's name. The id the index keys on. */
+  file: string;
+  path: string;
+  /** 'YYYY-MM-DD HH:MM:SS', from the file name or, failing that, its mtime. */
+  savedAt: string;
+  /** Where the audio was when it ran. It may have moved since. */
+  audio?: string;
+  settings?: TranscribeSettings;
+  elapsedSec?: number;
+  segments?: number;
+  speakers?: number;
+  names?: SpeakerNames;
+}
+
 /** IPC handlers return this instead of rejecting, so the UI can show the text. */
 interface IpcFailure {
   error: string;
@@ -99,6 +119,11 @@ interface TranscriberApi {
   ): Promise<TranscribeResult | Canceled | IpcFailure>;
   /** Stops the run in flight. Does nothing when there is none. */
   cancelTranscription(): Promise<void>;
+
+  /** Every past run the transcripts folder holds, newest first. */
+  listTranscripts(): Promise<ArchivedRun[]>;
+  /** Reads one back and makes it the transcript the app is working on. */
+  openTranscript(target: string): Promise<TranscribeResult | IpcFailure>;
   onProgress(listener: (progress: TranscribeProgress) => void): void;
 
   /** Renders the last run in main, where the word timings stayed, and asks

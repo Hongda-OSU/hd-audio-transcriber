@@ -210,7 +210,10 @@ function splitBySpeaker(rawSegments: RawSegment[]): Segment[] {
   return out;
 }
 
-function parseOutput(raw: string): TranscribeResult {
+/** whisperx's JSON → the app's segments. Exported because an archived run is
+ *  read back through this same function: an old transcript and a fresh one
+ *  should not be two different shapes. */
+export function parseTranscript(raw: string): TranscribeResult {
   let parsed: { segments?: unknown; language?: unknown };
   try {
     parsed = JSON.parse(raw) as typeof parsed;
@@ -349,7 +352,7 @@ export async function transcribe(
     }
 
     return {
-      ...parseOutput(raw),
+      ...parseTranscript(raw),
       ...(savedTo ? { savedTo } : {}),
       elapsedSec: (Date.now() - startedAt) / 1000,
     };

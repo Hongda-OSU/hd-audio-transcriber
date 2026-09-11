@@ -13,6 +13,9 @@ const api: TranscriberApi = {
 
   cancelTranscription: () => ipcRenderer.invoke('audio:cancel'),
 
+  listTranscripts: () => ipcRenderer.invoke('transcripts:list'),
+  openTranscript: (target) => ipcRenderer.invoke('transcripts:open', target),
+
   exportTranscript: (format, names) => ipcRenderer.invoke('transcript:export', format, names),
 
   revealPath: (target) => ipcRenderer.invoke('shell:reveal', target),
