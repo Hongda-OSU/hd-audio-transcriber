@@ -125,6 +125,72 @@ interface RawSegment {
 // "?想过。第二年…" instead of "…想过吗?".
 const TRAILING_PUNCTUATION = /^[\s，。！？；：、,.!?;:）)」』”’…]+/;
 
+// A stretch of the other speaker this short, with the speaker before and after
+// it agreeing and no pause in front of it, is diarization flicker rather than
+// someone talking. On a 54-minute recording it tore single characters out of
+// the middle of words, and every one of them cut a sentence in three.
+//
+// Counted in words, not seconds. A duration limit looks like the safer bound
+// and is the wrong one: at a tear the aligner stretches the orphaned character
+// across the boundary, so it comes back at a full second while an ordinary
+// word runs 0.18s. Flicker is short in tokens and long in time, which is the
+// opposite of what it looks like it should be.
+//
+// Three tokens cannot hold a turn — 「那是一九八七年。」 is eight — so a real
+// answer cannot be absorbed into the name of whoever asked the question. That
+// is the failure this whole app exists to avoid, and a bound that could not
+// rule it out is not worth the segments it would clean up.
+const MAX_FLICKER_WORDS = 3;
+
+// A real interjection starts after a beat. Mid-phrase flicker has no gap at all
+// — of 174 short stretches in that interview, 168 were butted straight against
+// the previous word.
+const FLICKER_PAUSE = 0.25;
+
+/**
+ * Reassigns stretches too short to be speech to whoever was talking either
+ * side of them.
+ *
+ * Mutates the parsed words. The archive keeps whisperx's own text, not this,
+ * so the original labels are never overwritten on disk.
+ */
+function despeckle(words: RawWord[]): void {
+  // Where each run of one speaker starts and ends.
+  const runs: Array<[number, number]> = [];
+  for (let i = 0; i < words.length; ) {
+    let j = i;
+    while (j < words.length && words[j]?.speaker === words[i]?.speaker) j += 1;
+    runs.push([i, j]);
+    i = j;
+  }
+
+  // Interior runs only: the first and last have nothing on one side to agree.
+  for (let k = 1; k < runs.length - 1; k += 1) {
+    const run = runs[k];
+    const previous = runs[k - 1];
+    const next = runs[k + 1];
+    if (!run || !previous || !next) continue;
+
+    const [start, end] = run;
+    if (end - start > MAX_FLICKER_WORDS) continue;
+
+    const before = words[previous[0]]?.speaker;
+    if (before === undefined || before !== words[next[0]]?.speaker) continue;
+
+    // Without timings there is no way to tell flicker from a real interjection,
+    // and the transcript is better off keeping a split it cannot justify.
+    const opening = words[start]?.start;
+    const closing = words[start - 1]?.end;
+    if (opening === undefined || closing === undefined) continue;
+    if (opening - closing >= FLICKER_PAUSE) continue;
+
+    for (let t = start; t < end; t += 1) {
+      const word = words[t];
+      if (word) word.speaker = before;
+    }
+  }
+}
+
 /**
  * Re-cuts whisperx's segments wherever the per-word speaker changes.
  *
@@ -135,6 +201,11 @@ const TRAILING_PUNCTUATION = /^[\s，。！？；：、,.!?;:）)」』”’…
  * Segments without word timings — alignment turned off — are kept as they are.
  */
 function splitBySpeaker(rawSegments: RawSegment[]): Segment[] {
+  // Across the whole recording, not per segment: whisperx's segment boundaries
+  // have nothing to do with who is speaking, and a flicker at the edge of one
+  // would be invisible from inside it.
+  despeckle(rawSegments.flatMap((seg) => seg.words ?? []));
+
   const out: Segment[] = [];
   // Everything built from words[] keeps them, so exports can cut a turn into
   // pieces short enough to read. The no-words branch below has none to keep.
