@@ -56,7 +56,6 @@ const savedTo = document.getElementById('savedTo') as HTMLElement;
 
 const runList = document.getElementById('runs') as HTMLOListElement;
 const runsMeta = document.getElementById('runsMeta') as HTMLElement;
-const runsEmpty = document.getElementById('runsEmpty') as HTMLElement;
 const speakerFields = document.getElementById('speakerFields') as HTMLElement;
 const exportFormat = document.getElementById('exportFormat') as HTMLSelectElement;
 const exportButton = document.getElementById('export') as HTMLButtonElement;
@@ -235,7 +234,6 @@ function renderRuns(runs: ArchivedRun[]): void {
     runList.append(item);
   }
 
-  runsEmpty.hidden = runs.length > 0;
   runsMeta.textContent = runs.length ? `${runs.length} run${runs.length === 1 ? '' : 's'}` : '';
 
   // Nothing behind it, nowhere to stand: the same rule Transcript follows.

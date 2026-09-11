@@ -951,13 +951,6 @@ body {
   grid-column: 1 / -1;
 }
 
-.runs__empty {
-  margin: 0;
-  padding: 24px 0;
-  font-size: 13px;
-  color: var(--text-dim);
-  text-align: center;
-}
 
 /* Quiet enough to sit in a heading without competing with it. */
 .linkish {
