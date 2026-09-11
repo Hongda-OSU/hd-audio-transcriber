@@ -97,6 +97,11 @@ scripts/make-samples.sh Regenerates samples/ — test audio and its transcript
 build/make-icon.sh      Regenerates icon.png and icon.icns from icon-source.png
 ```
 
+The artwork is masked to the macOS squircle — `|x|^5 + |y|^5 = 1`, filling 824
+of a 1024 canvas — because a circle reads as a coin next to every other icon in
+the Dock. The script checks the shape rather than trusting it: at 45° a squircle
+reaches 0.87 of its half-width and a circle 0.71, so one pixel tells them apart.
+
 `build/icon.icns` is not in git; M6 packaging runs `build/make-icon.sh` to
 produce it. Keeping generated files in the repo lets them drift from the source
 — an earlier icon shipped stale for several commits that way.
@@ -116,7 +121,10 @@ Three tabs, centred in the title bar.
   nothing.
 - **Transcript** — the result. Disabled until a run produces one; finishing
   takes you there. One field per speaker renames every line at once, and the
-  export control writes the transcript out beside the recording.
+  export control writes the transcript out beside the recording. The line
+  above the transcript counts the segments and speakers and says how long the
+  run took — the progress bar is gone by the time anyone asks, and that number
+  is how you find out what alignment actually costs on your own audio.
 - **Settings** — the HuggingFace token, and a note on what the options cost.
 
 Every finished run keeps whisperx's own JSON — per-word speakers and all — in
