@@ -97,17 +97,7 @@ scripts/make-samples.sh Regenerates samples/ — test audio and its transcript
 build/make-icon.sh      Regenerates icon.png and icon.icns from icon-source.png
 ```
 
-The artwork is masked to the macOS squircle — `|x|^5 + |y|^5 = 1`, filling 824
-of a 1024 canvas — because a circle reads as a coin next to every other icon in
-the Dock. The script checks the shape rather than trusting it: at 45° a squircle
-reaches 0.87 of its half-width and a circle 0.71, so one pixel tells them apart.
-
-`build/icon.icns` is not in git; M6 packaging runs `build/make-icon.sh` to
-produce it. Keeping generated files in the repo lets them drift from the source
-— an earlier icon shipped stale for several commits that way.
-
-TypeScript compiles with `tsc` alone — no bundler. The renderer has no npm
-dependencies, so there is nothing to bundle.
+`build/icon.icns` is not in git — run `build/make-icon.sh` before packaging.
 
 ## The window
 
