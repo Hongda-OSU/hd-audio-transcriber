@@ -151,11 +151,12 @@ docx comes with M5, where the transcript gets handed off.
 - The progress bar shows a real percentage while transcribing, then only a
   phase name. Alignment and diarization report nothing, and diarization is
   about half the wall time — it is working, not stuck.
-- Speaker labels flicker. On a real interview whisperx tore single characters
-  out of the middle of words and gave them to the other person; a stretch of
-  three words or less with no pause before it is given back. Anything longer is
-  left alone, because a bound that could merge a question with its answer would
-  cost more than the noise it cleans.
+- Speaker labels flicker. A quiet "mm" the transcription never writes down is
+  still heard by diarization, and the words that fall in that window are handed
+  over mid-sentence. A turn change has a pause on both sides of it; this has
+  neither, so a stretch of five words or less with no pause either side is
+  given back. Anything longer is left alone: a bound that could merge a
+  question with its answer would cost more than the noise it cleans.
 - Pin a speaker count only when you are sure of it. Pinning is absolute: name
   two on a recording with three people and the third is merged into the others,
   with no error and a transcript that reads as though it were right. Detect is

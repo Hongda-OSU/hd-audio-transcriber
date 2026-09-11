@@ -136,15 +136,18 @@ const TRAILING_PUNCTUATION = /^[\s，。！？；：、,.!?;:）)」』”’…
 // word runs 0.18s. Flicker is short in tokens and long in time, which is the
 // opposite of what it looks like it should be.
 //
-// Three tokens cannot hold a turn — 「那是一九八七年。」 is eight — so a real
+// Five tokens cannot hold a turn — 「那是一九八七年。」 is eight — so a real
 // answer cannot be absorbed into the name of whoever asked the question. That
 // is the failure this whole app exists to avoid, and a bound that could not
 // rule it out is not worth the segments it would clean up.
-const MAX_FLICKER_WORDS = 3;
+const MAX_FLICKER_WORDS = 5;
 
-// A real interjection starts after a beat. Mid-phrase flicker has no gap at all
-// — of 174 short stretches in that interview, 168 were butted straight against
-// the previous word.
+// Both sides, not just the front. A turn change is someone stopping and
+// someone else starting, so there is a beat before it and a beat after it.
+// What steals words has neither: one speaker's quiet backchannel never reaches
+// the transcript, diarization hears it anyway, and whatever words fall in that
+// window are handed over mid-sentence. Checking only the front let every one
+// of those through.
 const FLICKER_PAUSE = 0.25;
 
 /**
@@ -181,8 +184,12 @@ function despeckle(words: RawWord[]): void {
     // and the transcript is better off keeping a split it cannot justify.
     const opening = words[start]?.start;
     const closing = words[start - 1]?.end;
+    const resuming = words[end]?.start;
+    const ending = words[end - 1]?.end;
     if (opening === undefined || closing === undefined) continue;
+    if (resuming === undefined || ending === undefined) continue;
     if (opening - closing >= FLICKER_PAUSE) continue;
+    if (resuming - ending >= FLICKER_PAUSE) continue;
 
     for (let t = start; t < end; t += 1) {
       const word = words[t];

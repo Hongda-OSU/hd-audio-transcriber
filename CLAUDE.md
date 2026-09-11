@@ -9,7 +9,7 @@ The spec is in a private doc; ask before planning.
 - Pin only whisperx in `setup_backend.sh`. Never torch, pyannote, numpy: torch under 2.6 blocks alignment.
 - Never bundle Python. whisperx is spawned from `~/.transcriber-env`, then `~/whisperx-env`; else point at the script.
 - The HuggingFace token lives in `config.json`; never commit or log it.
-- Segments split whisperx's `words[]` where the speaker changes, never its per-segment `speaker` — a majority vote merging question with answer. Despeckle first: ≤3 words, no pause, same speaker both sides is flicker.
+- Segments split whisperx's `words[]` where the speaker changes, never its per-segment `speaker` — a majority vote merging question with answer. Despeckle first: ≤5 words, no pause on either side, same speaker both sides is flicker.
 - Exports render in main, where `words[]` stays: a turn overruns a cue.
 - `src/renderer/renderer.ts` is a classic script; an import breaks it.
 - No bundler, no React; complexity belongs in main.
