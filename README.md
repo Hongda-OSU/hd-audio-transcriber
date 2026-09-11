@@ -137,8 +137,10 @@ docx comes with M5, where the transcript gets handed off.
 | M2 | whisperx wired up — text, speakers, timestamps | ☑ |
 | M3 | Options panel (language, model, speakers, alignment) + progress | ☑ |
 | M4 | Rename speakers, export | ☑ |
-| M5 | Hand the transcript off for cleanup | ☐ |
-| M6 | Packaged `.app` | ☐ |
+| M5 | Open a past run, hand the transcript off for cleanup | ☐ |
+| M6 | Glossary and a queue — long recordings, run unattended | ☐ |
+| M7 | Review tab — play the audio against the transcript | ☐ |
+| M8 | Packaged `.app` | ☐ |
 
 ## Notes
 
