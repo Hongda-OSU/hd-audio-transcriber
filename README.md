@@ -10,7 +10,7 @@ Personal tool, MIT licensed.
 - **Transcribes** speech to text
 - **Separates speakers** (`SPEAKER_00`, `SPEAKER_01`… — rename them to real names)
 - **Keeps timestamps** for every segment
-- **Exports** to txt, srt, vtt, json, or docx
+- **Exports** to txt, srt, vtt or json
 
 ## Requirements
 
@@ -87,6 +87,7 @@ src/preload.ts          IPC bridge to the renderer
 src/types.d.ts          Shapes shared by main, preload and renderer
 src/lib/probe.ts        ffprobe → duration and container format
 src/lib/whisperx.ts     Options → command → segments
+src/lib/exporters.ts    Segments → txt, srt, vtt, json
 src/lib/config.ts       The token and the remembered options
 src/renderer/           UI: three tabs, described below
 dist/                   Compiled output, git-ignored
@@ -111,13 +112,34 @@ Three tabs, centred in the title bar.
   once one is loaded, then language, model, speaker count and alignment, and
   the button. Progress appears here while a run is going.
 - **Transcript** — the result. Disabled until a run produces one; finishing
-  takes you there.
+  takes you there. One field per speaker renames every line at once, and the
+  export control writes the transcript out beside the recording.
 - **Settings** — the HuggingFace token, and a note on what the options cost.
 
 Every finished run keeps whisperx's own JSON — per-word speakers and all — in
 `~/Library/Application Support/hd-audio-transcriber/transcripts/`, and the
-Transcript tab says where. ⌘R clears the window, not that file. Export is M4,
-and it will read from there rather than asking for the audio again.
+Transcript tab says where. ⌘R clears the window, not that file.
+
+Names are not saved: there is no way yet to reopen a past run, so a name
+written to disk would have nothing to read it back. That arrives with M5.
+
+## Exports
+
+| | |
+|---|---|
+| **txt** | Timestamp and speaker on one line, what they said on the next |
+| **srt**, **vtt** | Subtitles |
+| **json** | Segments with both the label and the name given to it |
+
+A segment is one speaker's whole turn, which in an interview runs half a
+minute — unreadable as a subtitle. srt and vtt cut it on the word timings
+alignment produced, at most 42 columns or 7 seconds per cue, preferring to
+break where a sentence ends. Turn alignment off and there are no word timings
+to cut on, so each turn stays one long cue.
+
+docx is not here. It is a zip of XML and would be the project's first runtime
+dependency; M5 is where the transcript gets handed off, and that is the point
+to decide what shape it needs.
 
 ## Status
 
@@ -126,7 +148,7 @@ and it will read from there rather than asking for the audio again.
 | M1 | Window with drag-and-drop file import | ☑ |
 | M2 | whisperx wired up — text, speakers, timestamps | ☑ |
 | M3 | Options panel (language, model, speakers, alignment) + progress | ☑ |
-| M4 | Rename speakers, export | ☐ |
+| M4 | Rename speakers, export | ☑ |
 | M5 | Hand the transcript off for cleanup | ☐ |
 | M6 | Packaged `.app` | ☐ |
 
