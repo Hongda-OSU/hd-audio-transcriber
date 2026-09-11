@@ -11,6 +11,8 @@ function configPath(): string {
 interface Config {
   hfToken?: string;
   settings?: Partial<TranscribeSettings>;
+  /** Where exports go. Unset means beside the recording. */
+  exportDir?: string;
 }
 
 // Alignment defaults on: without it whisperx gives a whole segment one
@@ -65,6 +67,19 @@ export function tokenFile(): string {
  */
 export function transcriptsDir(): string {
   return join(app.getPath('userData'), 'transcripts');
+}
+
+/** Empty when the user has not chosen one, which is not the same as a bad
+ *  choice: the caller decides what unset falls back to. */
+export function getExportDir(): string {
+  return read().exportDir ?? '';
+}
+
+export function setExportDir(dir: string): void {
+  const next: Config = { ...read() };
+  if (dir) next.exportDir = dir;
+  else delete next.exportDir;
+  writeFileSync(configPath(), `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
 }
 
 export function getSettings(): TranscribeSettings {

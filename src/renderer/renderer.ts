@@ -9,7 +9,7 @@ const fileMeta = document.getElementById('fileMeta') as HTMLElement;
 const filePathEl = document.getElementById('filePath') as HTMLElement;
 const startButton = document.getElementById('start') as HTMLButtonElement;
 
-type TabName = 'transcribe' | 'transcript' | 'settings';
+type TabName = 'transcribe' | 'transcript' | 'history' | 'settings';
 
 const TABS: Record<TabName, { tab: HTMLButtonElement; panel: HTMLElement }> = {
   transcribe: {
@@ -19,6 +19,10 @@ const TABS: Record<TabName, { tab: HTMLButtonElement; panel: HTMLElement }> = {
   transcript: {
     tab: document.getElementById('tabTranscript') as HTMLButtonElement,
     panel: document.getElementById('panelTranscript') as HTMLElement,
+  },
+  history: {
+    tab: document.getElementById('tabHistory') as HTMLButtonElement,
+    panel: document.getElementById('panelHistory') as HTMLElement,
   },
   settings: {
     tab: document.getElementById('tabSettings') as HTMLButtonElement,
@@ -30,6 +34,11 @@ const tokenInput = document.getElementById('token') as HTMLInputElement;
 const saveTokenButton = document.getElementById('saveToken') as HTMLButtonElement;
 const tokenState = document.getElementById('tokenState') as HTMLElement;
 const tokenPath = document.getElementById('tokenPath') as HTMLElement;
+
+const transcriptsPath = document.getElementById('transcriptsPath') as HTMLElement;
+const exportDirLine = document.getElementById('exportDir') as HTMLElement;
+const chooseExportDir = document.getElementById('chooseExportDir') as HTMLButtonElement;
+const clearExportDir = document.getElementById('clearExportDir') as HTMLButtonElement;
 
 const optLanguage = document.getElementById('optLanguage') as HTMLSelectElement;
 const optModel = document.getElementById('optModel') as HTMLSelectElement;
@@ -45,13 +54,9 @@ const resultMeta = document.getElementById('resultMeta') as HTMLElement;
 const segmentList = document.getElementById('segments') as HTMLOListElement;
 const savedTo = document.getElementById('savedTo') as HTMLElement;
 
-const transcriptList = document.getElementById('transcriptList') as HTMLElement;
-const transcriptResult = document.getElementById('transcriptResult') as HTMLElement;
 const runList = document.getElementById('runs') as HTMLOListElement;
 const runsMeta = document.getElementById('runsMeta') as HTMLElement;
 const runsEmpty = document.getElementById('runsEmpty') as HTMLElement;
-const backToRuns = document.getElementById('backToRuns') as HTMLButtonElement;
-
 const speakerFields = document.getElementById('speakerFields') as HTMLElement;
 const exportFormat = document.getElementById('exportFormat') as HTMLSelectElement;
 const exportButton = document.getElementById('export') as HTMLButtonElement;
@@ -134,7 +139,8 @@ function showPathLine(element: HTMLElement, label: string, target: string): void
   link.textContent = target;
   link.addEventListener('click', () => void window.api.revealPath(target));
 
-  element.replaceChildren(document.createTextNode(`${label} `), link);
+  // No label on the settings lines: there the path is the whole sentence.
+  element.replaceChildren(...(label ? [document.createTextNode(`${label} `), link] : [link]));
   element.classList.remove('is-error');
   element.hidden = false;
 }
@@ -175,17 +181,6 @@ function clearFile(): void {
   startButton.disabled = true;
 }
 
-/** The tab shows one of two things: a transcript, or the folder of them. */
-function showResultView(): void {
-  transcriptList.hidden = true;
-  transcriptResult.hidden = false;
-}
-
-function showRunsView(): void {
-  transcriptResult.hidden = true;
-  transcriptList.hidden = false;
-}
-
 function clearResult(): void {
   segmentList.replaceChildren();
   speakerFields.replaceChildren();
@@ -193,8 +188,10 @@ function clearResult(): void {
   speakerNames = {};
   exportState.hidden = true;
   savedTo.hidden = true;
-  // The tab is never empty any more — behind it is everything ever run.
-  showRunsView();
+  // Transcript holds the one you are working on; History holds the rest. A tab
+  // with nothing behind it should not be where the user is standing.
+  TABS.transcript.tab.disabled = true;
+  if (!TABS.transcript.panel.hidden) showTab('transcribe');
 }
 
 /** stem-2026-09-11-04-22-10.json → stem. The date is its own column. */
@@ -258,6 +255,8 @@ async function openRun(run: ArchivedRun): Promise<void> {
 
   speakerNames = { ...run.names };
   renderResult(result);
+  // Opening one is asking to read it, so go where it is.
+  showTab('transcript');
 }
 
 /** Renaming is worth doing once for a whole interview and never worth doing
@@ -353,7 +352,7 @@ function renderResult(result: TranscribeResult): void {
   else savedTo.hidden = true;
 
   renderSpeakerFields(result.segments);
-  showResultView();
+  TABS.transcript.tab.disabled = false;
 }
 
 /**
@@ -521,7 +520,23 @@ async function refreshTokenState(): Promise<void> {
   saveTokenButton.textContent = preview ? 'Replace' : 'Save';
 
   tokenState.textContent = preview ? `Saved · ${preview}` : 'Not set';
-  tokenPath.textContent = await window.api.getConfigPath();
+  showPathLine(tokenPath, '', await window.api.getConfigPath());
+}
+
+/** Settings names two folders the app owns; both open in Finder, because
+ *  `~/Library` is not somewhere anyone navigates to by hand. */
+async function refreshFolders(): Promise<void> {
+  showPathLine(transcriptsPath, '', await window.api.getTranscriptsPath());
+
+  const chosen = await window.api.getExportDir();
+  if (chosen) {
+    showPathLine(exportDirLine, '', chosen);
+  } else {
+    exportDirLine.textContent = 'Beside the recording';
+    exportDirLine.hidden = false;
+  }
+  chooseExportDir.textContent = chosen ? 'Change…' : 'Choose…';
+  clearExportDir.hidden = !chosen;
 }
 
 /** Typing over the stand-in clears it, so the bullets are never mixed into a
@@ -626,6 +641,17 @@ tokenInput.addEventListener('blur', () => {
   if (!tokenInput.value.trim()) void refreshTokenState();
 });
 
+chooseExportDir.addEventListener('click', () => {
+  void window.api.chooseExportDir().then((chosen) => {
+    // An empty string means the dialog was closed, which changes nothing.
+    if (chosen) void refreshFolders();
+  });
+});
+
+clearExportDir.addEventListener('click', () => {
+  void window.api.clearExportDir().then(refreshFolders);
+});
+
 saveTokenButton.addEventListener('click', () => {
   const value = tokenInput.value.trim();
   // Saving the stand-in would store bullets as the token.
@@ -650,17 +676,10 @@ for (const [name, { tab }] of Object.entries(TABS)) {
     showTab(name as TabName);
     // Read fresh every time: a run may have finished, or a file been deleted
     // in Finder, since the last look.
-    if (name === 'transcript' && transcriptResult.hidden) void refreshRuns();
+    if (name === 'history') void refreshRuns();
   });
 }
 
-backToRuns.addEventListener('click', () => {
-  showRunsView();
-  void refreshRuns();
-});
-
-// The tab opens on the folder until a run fills it.
-showRunsView();
-
 void refreshTokenState();
+void refreshFolders();
 void window.api.getSettings().then(applySettings);

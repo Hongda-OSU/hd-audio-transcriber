@@ -29,6 +29,11 @@ const api: TranscriberApi = {
   getTokenPreview: () => ipcRenderer.invoke('config:tokenPreview'),
   setToken: (token) => ipcRenderer.invoke('config:setToken', token),
   getConfigPath: () => ipcRenderer.invoke('config:path'),
+  getTranscriptsPath: () => ipcRenderer.invoke('config:transcriptsPath'),
+
+  getExportDir: () => ipcRenderer.invoke('config:getExportDir'),
+  chooseExportDir: () => ipcRenderer.invoke('config:chooseExportDir'),
+  clearExportDir: () => ipcRenderer.invoke('config:clearExportDir'),
 
   getSettings: () => ipcRenderer.invoke('config:getSettings'),
   setSettings: (settings) => ipcRenderer.invoke('config:setSettings', settings),

@@ -976,3 +976,9 @@ body {
   color: var(--text);
   text-decoration: underline;
 }
+
+/* The export folder sits on the same row as its buttons, and a path is long. */
+.card__path {
+  flex: 1 1 auto;
+  min-width: 0;
+}

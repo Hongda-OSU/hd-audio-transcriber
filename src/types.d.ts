@@ -144,6 +144,14 @@ interface TranscriberApi {
   setToken(token: string): Promise<void>;
   /** Where the token is stored, shown in settings. */
   getConfigPath(): Promise<string>;
+  /** Where finished runs are kept. Shown in settings, and openable. */
+  getTranscriptsPath(): Promise<string>;
+
+  /** The chosen export folder, or '' when exports go beside the recording. */
+  getExportDir(): Promise<string>;
+  /** Asks for a folder. Returns the chosen one, or '' if the dialog closed. */
+  chooseExportDir(): Promise<string>;
+  clearExportDir(): Promise<void>;
 }
 
 interface Window {

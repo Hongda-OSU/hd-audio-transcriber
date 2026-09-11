@@ -8,8 +8,10 @@ import { EXTENSIONS, render } from './lib/exporters';
 import { probeAudio } from './lib/probe';
 import { cancel, isRunning, transcribe, WhisperxCancelled, WhisperxError } from './lib/whisperx';
 import {
+  getExportDir,
   getSettings,
   getToken,
+  setExportDir,
   setSettings,
   setToken,
   tokenFile,
@@ -142,6 +144,26 @@ ipcMain.handle('audio:cancel', () => cancel());
 ipcMain.handle('config:tokenPreview', () => tokenPreview());
 ipcMain.handle('config:setToken', (_event, token: string) => setToken(token));
 ipcMain.handle('config:path', () => tokenFile());
+ipcMain.handle('config:transcriptsPath', () => transcriptsDir());
+
+ipcMain.handle('config:getExportDir', () => getExportDir());
+ipcMain.handle('config:clearExportDir', () => setExportDir(''));
+
+ipcMain.handle('config:chooseExportDir', async (event): Promise<string> => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  const options: Electron.OpenDialogOptions = {
+    title: 'Where exports go',
+    properties: ['openDirectory', 'createDirectory'],
+    buttonLabel: 'Use this folder',
+  };
+  const { canceled, filePaths } = await (win
+    ? dialog.showOpenDialog(win, options)
+    : dialog.showOpenDialog(options));
+
+  const chosen = canceled ? '' : (filePaths[0] ?? '');
+  if (chosen) setExportDir(chosen);
+  return chosen;
+});
 ipcMain.handle('config:getSettings', () => getSettings());
 ipcMain.handle('config:setSettings', (_event, settings: TranscribeSettings) => setSettings(settings));
 
@@ -286,7 +308,7 @@ ipcMain.handle(
     const stem = audioPath
       ? basename(audioPath, extname(audioPath))
       : basename(result.savedTo ?? 'transcript', '.json');
-    const folder = audioPath ? dirname(audioPath) : app.getPath('documents');
+    const folder = getExportDir() || (audioPath ? dirname(audioPath) : app.getPath('documents'));
     const suggested = join(folder, `${stem}.${extension}`);
     const win = BrowserWindow.fromWebContents(event.sender);
 
@@ -315,6 +337,9 @@ ipcMain.handle(
 );
 
 void app.whenReady().then(() => {
+  // Shown in Settings, so they have to be openable from there.
+  revealable.add(transcriptsDir());
+  revealable.add(tokenFile());
   // A packaged build takes its icon from build/icon.icns. In development the
   // Dock would otherwise show Electron's own, so point it at the same art.
   if (!app.isPackaged) {

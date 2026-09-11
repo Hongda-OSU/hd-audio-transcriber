@@ -99,21 +99,24 @@ build/make-icon.sh      Regenerates icon.png and icon.icns from icon-source.png
 
 ## The window
 
-Three tabs.
+Four tabs.
 
 - **Transcribe** — drop a file, set language, model, speaker count and
   alignment, run it. Progress shows here, and the button becomes **Stop**.
-- **Transcript** — the result, with the segment and speaker counts and how long
-  the run took. One field per speaker renames every line at once; the export
-  control writes the file out beside the recording.
-- **Settings** — the HuggingFace token.
+- **Transcript** — the one you are working on, with the segment and speaker
+  counts and how long the run took. One field per speaker renames every line at
+  once; the export control writes the file out.
+- **History** — every run ever finished. Open one and it comes back complete,
+  export included, without touching the audio again.
+- **Settings** — the HuggingFace token, where exports go, and where transcripts
+  are kept. Both folders open in Finder when you click them.
 
 Every finished run keeps whisperx's own JSON in
-`~/Library/Application Support/hd-audio-transcriber/transcripts/`. The
-Transcript tab shows the path — click it to open the folder. ⌘R clears the
-window, not the file.
+`~/Library/Application Support/hd-audio-transcriber/transcripts/`, with an
+`index.json` beside it recording the audio, the settings and the runtime —
+none of which whisperx's own output says. ⌘R clears the window, not the files.
 
-Speaker names last as long as the window does; M5 makes them stick.
+Speaker names last as long as the window does.
 
 ## Exports
 
