@@ -752,7 +752,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-top: 12px;
+  /* Wider than the 12px gap between the selects above: this row is a
+     different kind of thing — a decision, not another field — and the
+     smaller button needs the separation more, not less. */
+  margin-top: 20px;
 }
 
 .options__action .toggle {
