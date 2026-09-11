@@ -1,5 +1,5 @@
 import { accessSync, constants } from 'node:fs';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, extname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -329,7 +329,10 @@ export async function transcribe(
     let savedTo: string | undefined;
     if (opts.archiveDir) {
       try {
-        await mkdir(opts.archiveDir, { recursive: true });
+        await mkdir(opts.archiveDir, { recursive: true, mode: 0o700 });
+        // mkdir leaves an existing directory alone, and umask can trim the mode
+        // of a new one. The file names alone say who was interviewed.
+        await chmod(opts.archiveDir, 0o700);
         const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
         savedTo = join(opts.archiveDir, `${stem}-${stamp}.json`);
         await writeFile(savedTo, raw, { mode: 0o600 });
