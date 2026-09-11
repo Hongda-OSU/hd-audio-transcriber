@@ -11,6 +11,8 @@ const api: TranscriberApi = {
 
   transcribe: (filePath, settings) => ipcRenderer.invoke('audio:transcribe', filePath, settings),
 
+  cancelTranscription: () => ipcRenderer.invoke('audio:cancel'),
+
   exportTranscript: (format, names) => ipcRenderer.invoke('transcript:export', format, names),
 
   revealPath: (target) => ipcRenderer.invoke('shell:reveal', target),

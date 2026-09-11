@@ -5,7 +5,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 
 import { EXTENSIONS, render } from './lib/exporters';
 import { probeAudio } from './lib/probe';
-import { cancel, isRunning, transcribe, WhisperxError } from './lib/whisperx';
+import { cancel, isRunning, transcribe, WhisperxCancelled, WhisperxError } from './lib/whisperx';
 import {
   getSettings,
   getToken,
@@ -136,6 +136,8 @@ ipcMain.handle('audio:probe', async (_event, filePath: string): Promise<AudioInf
   }
 });
 
+ipcMain.handle('audio:cancel', () => cancel());
+
 ipcMain.handle('config:tokenPreview', () => tokenPreview());
 ipcMain.handle('config:setToken', (_event, token: string) => setToken(token));
 ipcMain.handle('config:path', () => tokenFile());
@@ -180,7 +182,7 @@ ipcMain.handle(
     event,
     filePath: string,
     settings: TranscribeSettings,
-  ): Promise<TranscribeResult | IpcFailure> => {
+  ): Promise<TranscribeResult | Canceled | IpcFailure> => {
     const hfToken = getToken();
     if (!hfToken) {
       return {
@@ -204,6 +206,8 @@ ipcMain.handle(
       if (result.savedTo) revealable.add(result.savedTo);
       return withoutWords(result);
     } catch (err) {
+      // Stopping is something the user did, not something that went wrong.
+      if (err instanceof WhisperxCancelled) return { canceled: true };
       if (err instanceof WhisperxError) return { error: err.message };
       return { error: `Transcription failed: ${(err as Error).message}` };
     }
@@ -223,7 +227,7 @@ ipcMain.handle(
     event,
     format: ExportFormat,
     names: SpeakerNames,
-  ): Promise<ExportSaved | ExportCanceled | IpcFailure> => {
+  ): Promise<ExportSaved | Canceled | IpcFailure> => {
     if (!lastRun) return { error: 'There is no transcript to export yet.' };
 
     const extension = EXTENSIONS[format];

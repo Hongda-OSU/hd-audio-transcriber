@@ -19,6 +19,10 @@ const ENV_CANDIDATES = [
 /** An error whose message is safe to show the user as-is. */
 export class WhisperxError extends Error {}
 
+/** The run was stopped on purpose. Its own type so the window can tell a
+ *  decision from a failure and not paint it red. */
+export class WhisperxCancelled extends WhisperxError {}
+
 export interface TranscribeOptions extends TranscribeSettings {
   file: string;
   hfToken: string;
@@ -231,8 +235,8 @@ export function isRunning(): boolean {
   return running !== null;
 }
 
-/** Kills an in-flight run. Called when the window closes, so a long job does
- *  not keep burning CPU after the app is gone. */
+/** Kills an in-flight run — the Stop button, and the window closing, so a long
+ *  job does not keep burning CPU after the app is gone. */
 export function cancel(): void {
   running?.kill('SIGTERM');
   running = null;
@@ -304,7 +308,7 @@ export async function transcribe(
       });
       child.on('close', (code, signal) => {
         running = null;
-        if (signal) return reject(new WhisperxError('Transcription cancelled.'));
+        if (signal) return reject(new WhisperxCancelled('Stopped.'));
         if (code !== 0) {
           return reject(new WhisperxError(`whisperx exited with code ${code}${tail ? `: ${tail}` : ''}`));
         }

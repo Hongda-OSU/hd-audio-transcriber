@@ -256,6 +256,15 @@ body {
   font-size: 13px;
 }
 
+/* Stop keeps the same shape and place as Transcribe — it is the same control
+   in its other state — and only picks up the warning colour on hover, where a
+   click is already being aimed. */
+.button--stop:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--elevated);
+}
+
 /* --- token ------------------------------------------------------------- */
 
 .token {

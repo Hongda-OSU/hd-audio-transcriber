@@ -275,10 +275,17 @@ function renderResult(result: TranscribeResult): void {
   TABS.transcript.tab.disabled = false;
 }
 
+/**
+ * While a run is going the button stops it. It used to sit there disabled
+ * reading "Transcribing…", which the progress card above already said — a
+ * wasted control in the one place the user wants one, during the longest
+ * thing the app does.
+ */
 function setBusy(value: boolean): void {
   busy = value;
-  startButton.disabled = value || !current;
-  startButton.textContent = value ? 'Transcribing…' : 'Transcribe';
+  startButton.disabled = !value && !current;
+  startButton.textContent = value ? 'Stop' : 'Transcribe';
+  startButton.classList.toggle('button--stop', value);
   dropzone.classList.toggle('is-disabled', value);
 }
 
@@ -361,6 +368,14 @@ async function runTranscription(): Promise<void> {
   const result = await window.api.transcribe(current.path, readSettings());
   setBusy(false);
   clearProgress();
+  logLine.hidden = true;
+
+  // Stopping is a decision, not a failure: it says so plainly and leaves the
+  // file loaded, because the next thing the user does is usually run it again.
+  if ('canceled' in result) {
+    showStatus('Stopped.');
+    return;
+  }
 
   if ('error' in result) {
     showStatus(result.error, true);
@@ -499,6 +514,14 @@ dropzone.addEventListener('click', () => {
 });
 
 startButton.addEventListener('click', () => {
+  if (busy) {
+    // Disabled while the signal travels, or an impatient second click lands
+    // on a button that is about to become Transcribe again.
+    startButton.disabled = true;
+    startButton.textContent = 'Stopping…';
+    void window.api.cancelTranscription();
+    return;
+  }
   void runTranscription();
 });
 

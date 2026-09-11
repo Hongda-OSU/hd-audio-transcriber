@@ -110,7 +110,10 @@ Three tabs, centred in the title bar.
 
 - **Transcribe** — the dropzone, which turns into a card describing the file
   once one is loaded, then language, model, speaker count and alignment, and
-  the button. Progress appears here while a run is going.
+  the button. Progress appears here while a run is going, and the button
+  becomes **Stop** — an hour of audio is about two hours of work, which is a
+  long time to have no way out. Stopping keeps the file loaded and writes
+  nothing.
 - **Transcript** — the result. Disabled until a run produces one; finishing
   takes you there. One field per speaker renames every line at once, and the
   export control writes the transcript out beside the recording.

@@ -81,8 +81,9 @@ interface ExportSaved {
   path: string;
 }
 
-/** Closing the save dialog is not a failure and gets no message. */
-interface ExportCanceled {
+/** The user called it off — closing the save dialog, stopping a run. Not a
+ *  failure, and it gets no error message. */
+interface Canceled {
   canceled: true;
 }
 
@@ -92,7 +93,12 @@ interface TranscriberApi {
   chooseFile(): Promise<string | null>;
   probe(filePath: string): Promise<AudioInfo | IpcFailure>;
 
-  transcribe(filePath: string, settings: TranscribeSettings): Promise<TranscribeResult | IpcFailure>;
+  transcribe(
+    filePath: string,
+    settings: TranscribeSettings,
+  ): Promise<TranscribeResult | Canceled | IpcFailure>;
+  /** Stops the run in flight. Does nothing when there is none. */
+  cancelTranscription(): Promise<void>;
   onProgress(listener: (progress: TranscribeProgress) => void): void;
 
   /** Renders the last run in main, where the word timings stayed, and asks
@@ -100,7 +106,7 @@ interface TranscriberApi {
   exportTranscript(
     format: ExportFormat,
     names: SpeakerNames,
-  ): Promise<ExportSaved | ExportCanceled | IpcFailure>;
+  ): Promise<ExportSaved | Canceled | IpcFailure>;
 
   /** Opens Finder on a file the app wrote. Main refuses any other path. */
   revealPath(target: string): Promise<void>;
