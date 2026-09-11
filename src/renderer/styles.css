@@ -758,8 +758,11 @@ body {
   margin-top: 20px;
 }
 
+/* One step off the card's left edge — enough to stop the checkbox reading as
+   another field's flush-left start, not so much that it looks indented. */
 .options__action .toggle {
   margin-top: 0;
+  margin-left: 4px;
 }
 
 /* Sized to match .button--quiet in Settings — the two are the only buttons in
