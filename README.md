@@ -101,30 +101,21 @@ build/make-icon.sh      Regenerates icon.png and icon.icns from icon-source.png
 
 ## The window
 
-Three tabs, centred in the title bar.
+Three tabs.
 
-- **Transcribe** — the dropzone, which turns into a card describing the file
-  once one is loaded, then language, model, speaker count and alignment, and
-  the button. Progress appears here while a run is going, and the button
-  becomes **Stop** — an hour of audio is about two hours of work, which is a
-  long time to have no way out. Stopping keeps the file loaded and writes
-  nothing.
-- **Transcript** — the result. Disabled until a run produces one; finishing
-  takes you there. One field per speaker renames every line at once, and the
-  export control writes the transcript out beside the recording. The line
-  above the transcript counts the segments and speakers and says how long the
-  run took — the progress bar is gone by the time anyone asks, and that number
-  is how you find out what alignment actually costs on your own audio.
-- **Settings** — the HuggingFace token, and a note on what the options cost.
+- **Transcribe** — drop a file, set language, model, speaker count and
+  alignment, run it. Progress shows here, and the button becomes **Stop**.
+- **Transcript** — the result, with the segment and speaker counts and how long
+  the run took. One field per speaker renames every line at once; the export
+  control writes the file out beside the recording.
+- **Settings** — the HuggingFace token.
 
-Every finished run keeps whisperx's own JSON — per-word speakers and all — in
-`~/Library/Application Support/hd-audio-transcriber/transcripts/`, and the
-Transcript tab says where. Click that path to open it — `~/Library` is hidden
-in Finder, so printing it and leaving it at that tells the user about a place
-they cannot reach. ⌘R clears the window, not that file.
+Every finished run keeps whisperx's own JSON in
+`~/Library/Application Support/hd-audio-transcriber/transcripts/`. The
+Transcript tab shows the path — click it to open the folder. ⌘R clears the
+window, not the file.
 
-Names are not saved: there is no way yet to reopen a past run, so a name
-written to disk would have nothing to read it back. That arrives with M5.
+Speaker names last as long as the window does; M5 makes them stick.
 
 ## Exports
 
