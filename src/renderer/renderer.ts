@@ -285,7 +285,6 @@ function setBusy(value: boolean): void {
   busy = value;
   startButton.disabled = !value && !current;
   startButton.textContent = value ? 'Stop' : 'Transcribe';
-  startButton.classList.toggle('button--stop', value);
   dropzone.classList.toggle('is-disabled', value);
 }
 
