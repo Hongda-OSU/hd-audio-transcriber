@@ -127,10 +127,6 @@ A segment is one speaker's whole turn, too long to read as a subtitle, so srt
 and vtt cut it into cues of at most 42 columns or 7 seconds. With alignment off
 there are no word timings to cut on and each turn stays one long cue.
 
-Speakers defaults to Detect. Pinning a number is absolute — name two on a
-recording with three people and the third is merged into the others, with no
-error and a transcript that looks right — so pin it only when you are sure.
-
 docx comes with M5, where the transcript gets handed off.
 
 ## Status
@@ -149,5 +145,9 @@ docx comes with M5, where the transcript gets handed off.
 - The progress bar shows a real percentage while transcribing, then only a
   phase name. Alignment and diarization report nothing, and diarization is
   about half the wall time — it is working, not stuck.
+- Pin a speaker count only when you are sure of it. Pinning is absolute: name
+  two on a recording with three people and the third is merged into the others,
+  with no error and a transcript that reads as though it were right. Detect is
+  the default for that reason.
 - Long files are slow and memory-hungry. Stay plugged in, and consider
   `caffeinate -dimsu`.
