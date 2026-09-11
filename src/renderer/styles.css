@@ -850,9 +850,11 @@ body {
 }
 
 /* The options row stretches its selects to fill a column; here the select is
-   as wide as the format name and no wider. */
+   as wide as its widest option — JSON — so every shorter name sat left of
+   centre in a box sized for a word it was not showing. */
 .options__select--inline {
   width: auto;
+  text-align: center;
 }
 
 /* A failed export reports in the same place a successful one does. */

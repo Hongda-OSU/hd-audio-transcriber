@@ -87,6 +87,27 @@ function formatTimestamp(seconds: number): string {
   return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
+/**
+ * How long a run took, in units rather than a clock. Audio length is written
+ * m:ss because that is how a recording is read everywhere else — but a run
+ * lasts anywhere from seconds to hours, and "1:56" beside a transcript could
+ * be either two minutes or two hours.
+ */
+function formatElapsed(seconds: number): string {
+  // Floored at a second so a run that beat the clock does not read as 0s,
+  // which would say it never ran.
+  const total = Math.max(1, Math.round(seconds));
+  if (total < 60) return `${total}s`;
+
+  if (total < 3600) {
+    const secs = total % 60;
+    return secs ? `${Math.floor(total / 60)}m ${secs}s` : `${total / 60}m`;
+  }
+
+  const minutes = Math.round((total % 3600) / 60);
+  return minutes ? `${Math.floor(total / 3600)}h ${minutes}m` : `${total / 3600}h`;
+}
+
 /** SPEAKER_00 → Speaker 1. M4 replaces these with real names. */
 function speakerLabel(speaker: string | undefined): string {
   if (!speaker) return 'Unknown';
@@ -237,6 +258,12 @@ function renderResult(result: TranscribeResult): void {
     plural(result.segments.length, 'segment'),
     plural(speakers.size, 'speaker'),
     ...(result.language ? [result.language] : []),
+    // "took" rather than a bare clock: beside a transcript, a duration on its
+    // own reads as the length of the recording.
+    // "1m 56s runtime", not a bare clock: the rest of this line is value plus
+    // noun, and a duration on its own beside a transcript reads as the length
+    // of the recording.
+    ...(result.elapsedSec ? [`${formatElapsed(result.elapsedSec)} runtime`] : []),
   ].join(' · ');
 
   // Saying where it went is the difference between a file existing and the

@@ -62,6 +62,9 @@ interface TranscribeResult {
   language: string;
   /** Where whisperx's own JSON was kept, so a run survives the window. */
   savedTo?: string;
+  /** Wall time the run took. An hour of audio is about two hours of work, and
+   *  the progress bar is gone by the time anyone asks how long it was. */
+  elapsedSec?: number;
 }
 
 /** IPC handlers return this instead of rejecting, so the UI can show the text. */

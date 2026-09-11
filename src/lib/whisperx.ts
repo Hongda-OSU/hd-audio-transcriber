@@ -258,6 +258,7 @@ export async function transcribe(
   opts: TranscribeOptions,
   onProgress: (progress: TranscribeProgress) => void,
 ): Promise<TranscribeResult> {
+  const startedAt = Date.now();
   const envDir = resolveEnvDir();
   const bin = `${envDir}/bin/whisperx`;
   const outputDir = await mkdtemp(join(tmpdir(), 'transcriber-'));
@@ -343,7 +344,11 @@ export async function transcribe(
       }
     }
 
-    return { ...parseOutput(raw), ...(savedTo ? { savedTo } : {}) };
+    return {
+      ...parseOutput(raw),
+      ...(savedTo ? { savedTo } : {}),
+      elapsedSec: (Date.now() - startedAt) / 1000,
+    };
   } finally {
     await rm(outputDir, { recursive: true, force: true });
   }
