@@ -132,7 +132,9 @@ const TRAILING_PUNCTUATION = /^[\s，。！？；：、,.!?;:）)」』”’…
  */
 function splitBySpeaker(rawSegments: RawSegment[]): Segment[] {
   const out: Segment[] = [];
-  let current: Segment | null = null;
+  // Everything built from words[] keeps them, so exports can cut a turn into
+  // pieces short enough to read. The no-words branch below has none to keep.
+  let current: (Segment & { words: Word[] }) | null = null;
   let lastSpeaker: string | undefined;
 
   const flush = () => {
@@ -159,14 +161,24 @@ function splitBySpeaker(rawSegments: RawSegment[]): Segment[] {
       // Some words carry no label; they belong to whoever was speaking.
       const speaker = word.speaker ?? lastSpeaker;
 
+      // Not every word is given timings. Falling back to where the segment
+      // stands keeps the list monotonic instead of dropping the word.
+      const start: number = Number(word.start ?? current?.end ?? seg.start ?? 0);
+      const end = Number(word.end ?? start);
+
       if (current && speaker === current.speaker) {
-        current.end = Number(word.end ?? current.end);
+        current.end = end;
         current.text += text;
+        current.words.push({ word: text, start, end });
       } else {
         // Punctuation opening a new speaker's turn closed the previous one.
         const orphan: RegExpExecArray | null = current ? TRAILING_PUNCTUATION.exec(text) : null;
         if (orphan && current) {
           current.text += orphan[0];
+          // The mark belongs to the word it closes, or a cue cut from words[]
+          // would lose it.
+          const last = current.words[current.words.length - 1];
+          if (last) last.word += orphan[0];
           flush();
           const rest = text.slice(orphan[0].length);
           if (!rest) {
@@ -177,11 +189,13 @@ function splitBySpeaker(rawSegments: RawSegment[]): Segment[] {
           flush();
         }
 
+        const head: string = orphan ? text.slice(orphan[0].length) : text;
         current = {
-          start: Number(word.start ?? seg.start ?? 0),
-          end: Number(word.end ?? seg.end ?? 0),
-          text: orphan ? text.slice(orphan[0].length) : text,
+          start,
+          end,
+          text: head,
           ...(speaker ? { speaker } : {}),
+          words: [{ word: head, start, end }],
         };
       }
       if (speaker) lastSpeaker = speaker;

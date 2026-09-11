@@ -12,6 +12,13 @@ interface AudioInfo {
   formatName: string;
 }
 
+/** One word with the timing alignment gave it. */
+interface Word {
+  word: string;
+  start: number;
+  end: number;
+}
+
 /**
  * One line of transcript, straight out of whisperx's JSON. This is the app's
  * source of truth — every export format is derived from a list of these.
@@ -22,6 +29,12 @@ interface Segment {
   text: string;
   /** Only present when whisperx ran with --diarize. */
   speaker?: string;
+  /**
+   * Present when alignment ran. A segment is as long as a speaker's turn,
+   * which is far too long to read as a subtitle, so srt and vtt cut it here.
+   * Stays in the main process — the renderer never shows a word on its own.
+   */
+  words?: Word[];
 }
 
 /** What the user picked in the options row; persisted between runs. */
@@ -56,6 +69,20 @@ interface IpcFailure {
   error: string;
 }
 
+type ExportFormat = 'txt' | 'srt' | 'vtt' | 'json';
+
+/** SPEAKER_00 → "Interviewer". Labels left out keep their own name. */
+type SpeakerNames = Record<string, string>;
+
+interface ExportSaved {
+  path: string;
+}
+
+/** Closing the save dialog is not a failure and gets no message. */
+interface ExportCanceled {
+  canceled: true;
+}
+
 interface TranscriberApi {
   /** Electron 32 removed File.path; this is how a dropped file gets one back. */
   getPathForFile(file: File): string;
@@ -64,6 +91,13 @@ interface TranscriberApi {
 
   transcribe(filePath: string, settings: TranscribeSettings): Promise<TranscribeResult | IpcFailure>;
   onProgress(listener: (progress: TranscribeProgress) => void): void;
+
+  /** Renders the last run in main, where the word timings stayed, and asks
+   *  for a save location. */
+  exportTranscript(
+    format: ExportFormat,
+    names: SpeakerNames,
+  ): Promise<ExportSaved | ExportCanceled | IpcFailure>;
 
   getSettings(): Promise<TranscribeSettings>;
   setSettings(settings: TranscribeSettings): Promise<void>;
