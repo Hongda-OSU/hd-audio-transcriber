@@ -2,16 +2,16 @@
 
 macOS Electron app: audio → transcript with speakers and timestamps.
 
-The spec is in a private doc; ask for it before planning.
+The spec is in a private doc; ask before planning.
 
 ## Rules
 
-- Pin only whisperx in `setup_backend.sh`. Never torch, pyannote or numpy: torch under 2.6 blocks alignment.
-- Never bundle Python. whisperx is spawned from `~/.transcriber-env`, then `~/whisperx-env`; with neither, point at `setup_backend.sh`.
+- Pin only whisperx in `setup_backend.sh`. Never torch, pyannote, numpy: torch under 2.6 blocks alignment.
+- Never bundle Python. whisperx is spawned from `~/.transcriber-env`, then `~/whisperx-env`; else point at the script.
 - The HuggingFace token lives in `config.json`; never commit or log it.
-- Segments split whisperx's `words[]` where the speaker changes, never its per-segment `speaker` — a majority vote merging question with answer. Despeckle first: a run of ≤3 words with no pause and the same speaker either side is diarization flicker, not a turn.
-- Exports render in main, where `words[]` stays: one turn is too long to be one subtitle cue.
-- `src/renderer/renderer.ts` is a classic script; an import emits CommonJS and breaks it.
+- Segments split whisperx's `words[]` where the speaker changes, never its per-segment `speaker` — a majority vote merging question with answer. Despeckle first: ≤3 words, no pause, same speaker both sides is flicker.
+- Exports render in main, where `words[]` stays: a turn overruns a cue.
+- `src/renderer/renderer.ts` is a classic script; an import breaks it.
 - No bundler, no React; complexity belongs in main.
 
 Out of scope: signing, notarization, App Store, auto-update, non-macOS.
