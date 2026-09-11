@@ -18,7 +18,12 @@ interface Config {
 const DEFAULTS: TranscribeSettings = {
   language: 'zh',
   model: 'large-v3',
-  speakers: 2,
+  // Detect, not a number. Pinning is the strongest hint diarization gets, but
+  // it is absolute: pin 2 on a recording with three people and the third is
+  // folded into whichever of the other two he sounds nearest, with no error
+  // and a transcript that looks right. A default is not the place to assert
+  // something about audio nobody has listened to yet.
+  speakers: 0,
   align: true,
 };
 
