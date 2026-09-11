@@ -58,9 +58,7 @@ npm start       # compiles TypeScript, then launches the app
 and a main-process change relaunches the app.
 
 While a transcription is running it does neither, and says
-`[dev] reload deferred` until the run ends. A reload would destroy the promise
-waiting on the result, and a relaunch would kill whisperx outright; an hour of
-audio takes about two hours, which is a lot to lose to an edit.
+`[dev] reload deferred` until the run ends.
 
 ```bash
 npm run build       # compile to dist/
@@ -125,15 +123,11 @@ Speaker names last as long as the window does; M5 makes them stick.
 | **srt**, **vtt** | Subtitles |
 | **json** | Segments with both the label and the name given to it |
 
-A segment is one speaker's whole turn, which in an interview runs half a
-minute — unreadable as a subtitle. srt and vtt cut it on the word timings
-alignment produced, at most 42 columns or 7 seconds per cue, preferring to
-break where a sentence ends. Turn alignment off and there are no word timings
-to cut on, so each turn stays one long cue.
+A segment is one speaker's whole turn, too long to read as a subtitle, so srt
+and vtt cut it into cues of at most 42 columns or 7 seconds. With alignment off
+there are no word timings to cut on and each turn stays one long cue.
 
-docx is not here. It is a zip of XML and would be the project's first runtime
-dependency; M5 is where the transcript gets handed off, and that is the point
-to decide what shape it needs.
+docx comes with M5, where the transcript gets handed off.
 
 ## Status
 
@@ -148,16 +142,8 @@ to decide what shape it needs.
 
 ## Notes
 
-- Pin only whisperx in `setup_backend.sh`. An earlier version pinned torch
-  beneath it, and torch under 2.6 makes `transformers` refuse to load the
-  alignment model (CVE-2025-32434). Without alignment whisperx gives each
-  segment one speaker, so a question and its answer come back as one person.
-- Speakers come from splitting whisperx's per-word labels, not from the one it
-  puts on each segment — that one is a majority vote, so a question and the
-  answer sharing a segment came back as the same person. On the test interview
-  that turned 5 segments with a meaningless label into 12 with 12/12 correct.
-- The progress bar is real while transcribing — `--print_progress` reports a
-  percentage — and shows only a phase name after that. Alignment and
-  diarization report nothing, and diarization alone is about half the wall
-  time, so anything moving there would be invented.
-- Long files are slow and memory-hungry. Stay plugged in, and consider `caffeinate -dimsu`.
+- The progress bar shows a real percentage while transcribing, then only a
+  phase name. Alignment and diarization report nothing, and diarization is
+  about half the wall time — it is working, not stuck.
+- Long files are slow and memory-hungry. Stay plugged in, and consider
+  `caffeinate -dimsu`.
