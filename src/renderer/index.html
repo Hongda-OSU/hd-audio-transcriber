@@ -165,7 +165,25 @@
               <h2 class="result__title">Transcript</h2>
               <span id="resultMeta" class="result__meta"></span>
             </div>
+
+            <div class="tools">
+              <!-- One field per detected speaker; typing in one renames every
+                   line that speaker has. -->
+              <div id="speakerFields" class="speakers" hidden></div>
+
+              <div class="tools__export">
+                <select id="exportFormat" class="options__select options__select--inline">
+                  <option value="txt">Text</option>
+                  <option value="srt">SRT</option>
+                  <option value="vtt">VTT</option>
+                  <option value="json">JSON</option>
+                </select>
+                <button id="export" class="button button--quiet" type="button">Export</button>
+              </div>
+            </div>
+
             <ol id="segments" class="segments"></ol>
+          <p id="exportState" class="result__saved" hidden></p>
           <p id="savedTo" class="result__saved" hidden></p>
           </section>
       </section>

@@ -45,9 +45,21 @@ const resultMeta = document.getElementById('resultMeta') as HTMLElement;
 const segmentList = document.getElementById('segments') as HTMLOListElement;
 const savedTo = document.getElementById('savedTo') as HTMLElement;
 
+const speakerFields = document.getElementById('speakerFields') as HTMLElement;
+const exportFormat = document.getElementById('exportFormat') as HTMLSelectElement;
+const exportButton = document.getElementById('export') as HTMLButtonElement;
+const exportState = document.getElementById('exportState') as HTMLElement;
+
 /** The file currently loaded, and the input to a transcription run. */
 let current: AudioInfo | null = null;
 let busy = false;
+
+/**
+ * What the user has renamed each diarization label to. Lives for as long as
+ * the window does: there is no way yet to reopen a past run, so a name written
+ * to disk would have nothing to read it back.
+ */
+let speakerNames: SpeakerNames = {};
 
 /* --- formatting -------------------------------------------------------- */
 
@@ -120,9 +132,59 @@ function clearFile(): void {
 
 function clearResult(): void {
   segmentList.replaceChildren();
+  speakerFields.replaceChildren();
+  speakerFields.hidden = true;
+  speakerNames = {};
+  exportState.hidden = true;
   TABS.transcript.tab.disabled = true;
   // A tab with nothing behind it should not be where the user is standing.
   if (!TABS.transcript.panel.hidden) showTab('transcribe');
+}
+
+/** Renaming is worth doing once for a whole interview and never worth doing
+ *  per line, so one field drives every segment that label appears on. */
+function applySpeakerName(speaker: string, value: string): void {
+  const name = value.trim();
+  if (name) speakerNames[speaker] = name;
+  else delete speakerNames[speaker];
+
+  const selector = `.segment__speaker[data-speaker="${CSS.escape(speaker)}"]`;
+  for (const element of segmentList.querySelectorAll<HTMLElement>(selector)) {
+    element.textContent = name || speakerLabel(speaker);
+  }
+}
+
+function renderSpeakerFields(segments: Segment[]): void {
+  speakerFields.replaceChildren();
+
+  const speakers: string[] = [];
+  for (const segment of segments) {
+    if (segment.speaker && !speakers.includes(segment.speaker)) speakers.push(segment.speaker);
+  }
+
+  for (const speaker of speakers) {
+    const field = document.createElement('label');
+    field.className = 'speaker';
+
+    const input = document.createElement('input');
+    input.className = 'speaker__input';
+    input.type = 'text';
+    // The placeholder is the only thing saying which speaker this is, so it
+    // has to be the label the transcript is already showing.
+    input.placeholder = speakerLabel(speaker);
+    // The name gets a column of its own in the transcript; past this it stops
+    // being a name and starts crowding out the words.
+    input.maxLength = 20;
+    input.spellcheck = false;
+    input.value = speakerNames[speaker] ?? '';
+    input.addEventListener('input', () => applySpeakerName(speaker, input.value));
+
+    field.append(input);
+    speakerFields.append(field);
+  }
+
+  // Diarization can come back with nothing to name.
+  speakerFields.hidden = speakers.length === 0;
 }
 
 function renderResult(result: TranscribeResult): void {
@@ -138,8 +200,10 @@ function renderResult(result: TranscribeResult): void {
 
     const who = document.createElement('span');
     who.className = 'segment__speaker';
-    who.textContent = speakerLabel(segment.speaker);
-    // M4 renames speakers in bulk; the attribute is what it will select on.
+    who.textContent = segment.speaker
+      ? speakerNames[segment.speaker] || speakerLabel(segment.speaker)
+      : speakerLabel(segment.speaker);
+    // What a rename selects on: the label survives the name being changed.
     who.dataset.speaker = segment.speaker ?? '';
 
     const text = document.createElement('span');
@@ -163,6 +227,7 @@ function renderResult(result: TranscribeResult): void {
   savedTo.textContent = result.savedTo ? `Saved to ${result.savedTo}` : '';
   savedTo.hidden = !result.savedTo;
 
+  renderSpeakerFields(result.segments);
   TABS.transcript.tab.disabled = false;
 }
 
@@ -270,6 +335,31 @@ async function runTranscription(): Promise<void> {
   showTab('transcript');
 }
 
+async function exportTranscript(): Promise<void> {
+  exportButton.disabled = true;
+  exportState.hidden = true;
+
+  const outcome = await window.api.exportTranscript(
+    exportFormat.value as ExportFormat,
+    speakerNames,
+  );
+  exportButton.disabled = false;
+
+  if ('error' in outcome) {
+    exportState.textContent = outcome.error;
+    exportState.classList.add('is-error');
+    exportState.hidden = false;
+    return;
+  }
+
+  // Closing the dialog is a decision, not a failure; it gets no message.
+  if ('canceled' in outcome) return;
+
+  exportState.textContent = `Exported to ${outcome.path}`;
+  exportState.classList.remove('is-error');
+  exportState.hidden = false;
+}
+
 const MASK = '••••••••••••••••';
 
 /**
@@ -370,6 +460,10 @@ startButton.addEventListener('click', () => {
   void runTranscription();
 });
 
+exportButton.addEventListener('click', () => {
+  void exportTranscript();
+});
+
 // Selecting is fine; taking a copy out is not. This blocks the stand-in
 // bullets and, more usefully, a real token sitting in the field before it is
 // saved. Paste stays allowed — that is how the token gets in.
@@ -385,7 +479,6 @@ tokenInput.addEventListener('beforeinput', clearMask);
 tokenInput.addEventListener('focus', clearMask);
 tokenInput.addEventListener('blur', () => {
   if (!tokenInput.value.trim()) void refreshTokenState();
-void window.api.getSettings().then(applySettings);
 });
 
 saveTokenButton.addEventListener('click', () => {

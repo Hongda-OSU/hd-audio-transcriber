@@ -11,6 +11,8 @@ const api: TranscriberApi = {
 
   transcribe: (filePath, settings) => ipcRenderer.invoke('audio:transcribe', filePath, settings),
 
+  exportTranscript: (format, names) => ipcRenderer.invoke('transcript:export', format, names),
+
   // The event object stays on this side of the bridge; the renderer only ever
   // sees the line itself.
   onProgress: (listener) => {

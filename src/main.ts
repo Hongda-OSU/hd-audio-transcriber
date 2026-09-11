@@ -1,7 +1,9 @@
 import { copyFileSync, watch } from 'node:fs';
-import { join } from 'node:path';
+import { writeFile } from 'node:fs/promises';
+import { basename, dirname, extname, join } from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 
+import { EXTENSIONS, render } from './lib/exporters';
 import { probeAudio } from './lib/probe';
 import { cancel, isRunning, transcribe, WhisperxError } from './lib/whisperx';
 import {
@@ -140,6 +142,27 @@ ipcMain.handle('config:path', () => tokenFile());
 ipcMain.handle('config:getSettings', () => getSettings());
 ipcMain.handle('config:setSettings', (_event, settings: TranscribeSettings) => setSettings(settings));
 
+/**
+ * The last finished run, kept here rather than in the renderer because exports
+ * are rendered here: word timings are what a subtitle is cut on, and sending
+ * every word across the bridge only to have it sent back would be a round trip
+ * for data the window never shows.
+ */
+let lastRun: { result: TranscribeResult; audioPath: string } | null = null;
+
+/** Word timings are for the exporters; the window shows whole segments. */
+function withoutWords(result: TranscribeResult): TranscribeResult {
+  return {
+    ...result,
+    segments: result.segments.map(({ start, end, text, speaker }) => ({
+      start,
+      end,
+      text,
+      ...(speaker ? { speaker } : {}),
+    })),
+  };
+}
+
 ipcMain.handle(
   'audio:transcribe',
   async (
@@ -158,17 +181,70 @@ ipcMain.handle(
       // Remember what was used, so the next run opens on the same choices.
       setSettings(settings);
 
-      return await transcribe(
+      const result = await transcribe(
         { file: filePath, hfToken, archiveDir: transcriptsDir(), ...settings },
         (progress) => {
           // The window can be gone by the time a late update arrives.
           if (!event.sender.isDestroyed()) event.sender.send('transcribe:progress', progress);
         },
       );
+
+      lastRun = { result, audioPath: filePath };
+      return withoutWords(result);
     } catch (err) {
       if (err instanceof WhisperxError) return { error: err.message };
       return { error: `Transcription failed: ${(err as Error).message}` };
     }
+  },
+);
+
+const FILTERS: Record<ExportFormat, string> = {
+  txt: 'Text',
+  srt: 'SubRip subtitles',
+  vtt: 'WebVTT subtitles',
+  json: 'JSON',
+};
+
+ipcMain.handle(
+  'transcript:export',
+  async (
+    event,
+    format: ExportFormat,
+    names: SpeakerNames,
+  ): Promise<ExportSaved | ExportCanceled | IpcFailure> => {
+    if (!lastRun) return { error: 'There is no transcript to export yet.' };
+
+    const extension = EXTENSIONS[format];
+    if (!extension) return { error: `Unknown export format: ${format}` };
+
+    const { result, audioPath } = lastRun;
+    const stem = basename(audioPath, extname(audioPath));
+
+    // Next to the recording, which is where the person who has both of them
+    // is already looking.
+    const suggested = join(dirname(audioPath), `${stem}.${extension}`);
+    const win = BrowserWindow.fromWebContents(event.sender);
+
+    const { canceled, filePath } = await (win
+      ? dialog.showSaveDialog(win, {
+          defaultPath: suggested,
+          filters: [{ name: FILTERS[format], extensions: [extension] }],
+        })
+      : dialog.showSaveDialog({ defaultPath: suggested }));
+
+    if (canceled || !filePath) return { canceled: true };
+
+    try {
+      await writeFile(
+        filePath,
+        render(format, { segments: result.segments, language: result.language, names }),
+        'utf8',
+      );
+    } catch (err) {
+      return { error: `Could not write ${filePath}: ${(err as Error).message}` };
+    }
+
+    return { path: filePath };
   },
 );
 

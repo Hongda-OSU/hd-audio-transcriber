@@ -343,22 +343,25 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* One grid for the whole list, not one per line: the speaker column has to be
+   as wide as the longest name and the same width on every row, and a name is
+   whatever the user typed. Each row was its own grid before renaming existed,
+   which would now leave the text starting at a different place on each line. */
 .segments {
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.segment {
   display: grid;
-  grid-template-columns: 44px 72px 1fr;
-  gap: 10px;
+  grid-template-columns: 44px minmax(72px, max-content) 1fr;
+  column-gap: 10px;
+  row-gap: 14px;
   align-items: baseline;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.segment {
+  display: contents;
 }
 
 .segment__time {
@@ -795,4 +798,59 @@ body {
   overflow-wrap: anywhere;
   user-select: text;
   cursor: text;
+}
+
+/* --- transcript tools --------------------------------------------------- */
+
+/* Renaming on the left, exporting on the right: one is what you do to the
+   transcript, the other is what you do with it. */
+.tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.speakers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.speaker__input {
+  width: 132px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  user-select: text;
+}
+
+.speaker__input:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.tools__export {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* The options row stretches its selects to fill a column; here the select is
+   as wide as the format name and no wider. */
+.options__select--inline {
+  width: auto;
+}
+
+/* A failed export reports in the same place a successful one does. */
+.result__saved.is-error {
+  color: var(--danger);
+  font-family: inherit;
 }
