@@ -561,7 +561,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 8px;
+  /* Adjacent margins collapse, so the room above the bar has to come from one
+     side of the pair — putting it on the track as well would change nothing. */
+  margin-bottom: 14px;
   font-size: 13px;
 }
 
@@ -576,6 +578,10 @@ body {
 
 .progress__track {
   height: 4px;
+  /* A 4px bar needs room around it to read as a bar rather than as an
+     underline for the phase above it: 14px of it, and 18px below once the
+     card's own padding is counted. */
+  margin: 0 0 4px;
   border-radius: 2px;
   background: var(--elevated);
   overflow: hidden;
