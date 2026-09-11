@@ -1,7 +1,7 @@
 import { copyFileSync, watch } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 
 import { EXTENSIONS, render } from './lib/exporters';
 import { probeAudio } from './lib/probe';
@@ -150,6 +150,17 @@ ipcMain.handle('config:setSettings', (_event, settings: TranscribeSettings) => s
  */
 let lastRun: { result: TranscribeResult; audioPath: string } | null = null;
 
+/**
+ * Paths this process has told the window about. Revealing one only opens
+ * Finder, but the renderer should not be able to name a path the app never
+ * wrote — it decides nothing else about the filesystem.
+ */
+const revealable = new Set<string>();
+
+ipcMain.handle('shell:reveal', (_event, target: string): void => {
+  if (revealable.has(target)) shell.showItemInFolder(target);
+});
+
 /** Word timings are for the exporters; the window shows whole segments. */
 function withoutWords(result: TranscribeResult): TranscribeResult {
   return {
@@ -190,6 +201,7 @@ ipcMain.handle(
       );
 
       lastRun = { result, audioPath: filePath };
+      if (result.savedTo) revealable.add(result.savedTo);
       return withoutWords(result);
     } catch (err) {
       if (err instanceof WhisperxError) return { error: err.message };
@@ -244,6 +256,7 @@ ipcMain.handle(
       return { error: `Could not write ${filePath}: ${(err as Error).message}` };
     }
 
+    revealable.add(filePath);
     return { path: filePath };
   },
 );

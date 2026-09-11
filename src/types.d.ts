@@ -99,6 +99,9 @@ interface TranscriberApi {
     names: SpeakerNames,
   ): Promise<ExportSaved | ExportCanceled | IpcFailure>;
 
+  /** Opens Finder on a file the app wrote. Main refuses any other path. */
+  revealPath(target: string): Promise<void>;
+
   getSettings(): Promise<TranscribeSettings>;
   setSettings(settings: TranscribeSettings): Promise<void>;
 

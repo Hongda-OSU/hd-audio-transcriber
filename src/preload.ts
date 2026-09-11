@@ -13,6 +13,8 @@ const api: TranscriberApi = {
 
   exportTranscript: (format, names) => ipcRenderer.invoke('transcript:export', format, names),
 
+  revealPath: (target) => ipcRenderer.invoke('shell:reveal', target),
+
   // The event object stays on this side of the bridge; the renderer only ever
   // sees the line itself.
   onProgress: (listener) => {

@@ -118,7 +118,9 @@ Three tabs, centred in the title bar.
 
 Every finished run keeps whisperx's own JSON — per-word speakers and all — in
 `~/Library/Application Support/hd-audio-transcriber/transcripts/`, and the
-Transcript tab says where. ⌘R clears the window, not that file.
+Transcript tab says where. Click that path to open it — `~/Library` is hidden
+in Finder, so printing it and leaving it at that tells the user about a place
+they cannot reach. ⌘R clears the window, not that file.
 
 Names are not saved: there is no way yet to reopen a past run, so a name
 written to disk would have nothing to read it back. That arrives with M5.

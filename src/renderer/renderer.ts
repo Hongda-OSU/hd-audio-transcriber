@@ -94,6 +94,23 @@ function speakerLabel(speaker: string | undefined): string {
   return match ? `Speaker ${Number(match[1]) + 1}` : speaker;
 }
 
+/**
+ * A line ending in a path the app just wrote, as a button that opens Finder
+ * there. `~/Library` is hidden in Finder, so a path printed as plain text is a
+ * place the user is told about and cannot get to.
+ */
+function showPathLine(element: HTMLElement, label: string, target: string): void {
+  const link = document.createElement('button');
+  link.type = 'button';
+  link.className = 'pathlink';
+  link.textContent = target;
+  link.addEventListener('click', () => void window.api.revealPath(target));
+
+  element.replaceChildren(document.createTextNode(`${label} `), link);
+  element.classList.remove('is-error');
+  element.hidden = false;
+}
+
 /* --- rendering --------------------------------------------------------- */
 
 function showStatus(message: string, isError = false): void {
@@ -224,8 +241,8 @@ function renderResult(result: TranscribeResult): void {
 
   // Saying where it went is the difference between a file existing and the
   // user knowing a run survives the window.
-  savedTo.textContent = result.savedTo ? `Saved to ${result.savedTo}` : '';
-  savedTo.hidden = !result.savedTo;
+  if (result.savedTo) showPathLine(savedTo, 'Saved to', result.savedTo);
+  else savedTo.hidden = true;
 
   renderSpeakerFields(result.segments);
   TABS.transcript.tab.disabled = false;
@@ -355,9 +372,7 @@ async function exportTranscript(): Promise<void> {
   // Closing the dialog is a decision, not a failure; it gets no message.
   if ('canceled' in outcome) return;
 
-  exportState.textContent = `Exported to ${outcome.path}`;
-  exportState.classList.remove('is-error');
-  exportState.hidden = false;
+  showPathLine(exportState, 'Exported to', outcome.path);
 }
 
 const MASK = '••••••••••••••••';
