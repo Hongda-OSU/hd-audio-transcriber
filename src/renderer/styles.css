@@ -759,10 +759,14 @@ body {
   margin-top: 0;
 }
 
+/* Sized to match .button--quiet in Settings — the two are the only buttons in
+   the app, and one sitting larger than the other read as a hierarchy that
+   isn't there. */
 .button--primary {
   flex: 0 0 auto;
   margin-top: 0;
-  padding: 8px 24px;
+  padding: 6px 16px;
+  font-size: 13px;
 }
 
 /* A tab with nothing behind it yet. */
