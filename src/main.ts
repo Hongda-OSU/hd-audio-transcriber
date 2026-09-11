@@ -1,7 +1,7 @@
 import { copyFileSync, watch } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, powerSaveBlocker, shell } from 'electron';
 
 import { listRuns, readArchive, recordRun } from './lib/archive';
 import { EXTENSIONS, render } from './lib/exporters';
@@ -186,6 +186,29 @@ ipcMain.handle('shell:reveal', (_event, target: string): void => {
   if (revealable.has(target)) shell.showItemInFolder(target);
 });
 
+/**
+ * Keeps the machine awake while a run is in flight. An hour of audio is about
+ * two hours of work; a Mac that idles to sleep in the middle of that takes
+ * whisperx with it, and the README's advice to run `caffeinate` yourself was
+ * the app admitting it did not handle its own longest operation.
+ *
+ * 'prevent-app-suspension' rather than 'prevent-display-sleep' — the work does
+ * not need the screen on. Closing the lid still sleeps, as it does for
+ * caffeinate; nothing in userspace overrides that.
+ */
+let awake: number | null = null;
+
+function stayAwake(): void {
+  if (awake === null) awake = powerSaveBlocker.start('prevent-app-suspension');
+}
+
+/** Always from a finally. A blocker left on holds the machine awake until the
+ *  app quits, which is a worse failure than never having started one. */
+function letSleep(): void {
+  if (awake !== null && powerSaveBlocker.isStarted(awake)) powerSaveBlocker.stop(awake);
+  awake = null;
+}
+
 /** Word timings are for the exporters; the window shows whole segments. */
 function withoutWords(result: TranscribeResult): TranscribeResult {
   return {
@@ -216,6 +239,7 @@ ipcMain.handle(
     try {
       // Remember what was used, so the next run opens on the same choices.
       setSettings(settings);
+      stayAwake();
 
       const result = await transcribe(
         { file: filePath, hfToken, archiveDir: transcriptsDir(), ...settings },
@@ -244,6 +268,8 @@ ipcMain.handle(
       if (err instanceof WhisperxCancelled) return { canceled: true };
       if (err instanceof WhisperxError) return { error: err.message };
       return { error: `Transcription failed: ${(err as Error).message}` };
+    } finally {
+      letSleep();
     }
   },
 );

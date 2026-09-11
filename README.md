@@ -154,5 +154,5 @@ docx comes with M5, where the transcript gets handed off.
   two on a recording with three people and the third is merged into the others,
   with no error and a transcript that reads as though it were right. Detect is
   the default for that reason.
-- Long files are slow and memory-hungry. Stay plugged in, and consider
-  `caffeinate -dimsu`.
+- Long files are slow and memory-hungry. Stay plugged in. The app holds the
+  machine awake for the length of a run, but closing the lid still sleeps.
