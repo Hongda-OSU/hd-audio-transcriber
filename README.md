@@ -107,7 +107,8 @@ Four tabs.
   counts and how long the run took. One field per speaker renames every line at
   once; the export control writes the file out.
 - **History** — every run ever finished. Open one and it comes back complete,
-  export included, without touching the audio again.
+  export included, without touching the audio again. Disabled while the folder
+  is empty.
 - **Settings** — the HuggingFace token, where exports go, and where transcripts
   are kept. Both folders open in Finder when you click them.
 

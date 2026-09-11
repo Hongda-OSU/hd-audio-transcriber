@@ -237,6 +237,12 @@ function renderRuns(runs: ArchivedRun[]): void {
 
   runsEmpty.hidden = runs.length > 0;
   runsMeta.textContent = runs.length ? `${runs.length} run${runs.length === 1 ? '' : 's'}` : '';
+
+  // Nothing behind it, nowhere to stand: the same rule Transcript follows.
+  // Files can go from Finder as well as from here, so this is checked on every
+  // look, not only after a run.
+  TABS.history.tab.disabled = runs.length === 0;
+  if (runs.length === 0 && !TABS.history.panel.hidden) showTab('transcribe');
 }
 
 async function refreshRuns(): Promise<void> {
@@ -469,6 +475,7 @@ async function runTranscription(): Promise<void> {
   clearStatus();
   logLine.hidden = true;
   renderResult(result);
+  void refreshRuns();
   // The run is over and the transcript is the point of it.
   showTab('transcript');
 }
@@ -682,4 +689,6 @@ for (const [name, { tab }] of Object.entries(TABS)) {
 
 void refreshTokenState();
 void refreshFolders();
+// Decides whether the tab is even available, so it cannot wait for a click.
+void refreshRuns();
 void window.api.getSettings().then(applySettings);
