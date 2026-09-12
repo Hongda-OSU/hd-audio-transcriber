@@ -1,7 +1,15 @@
 import { copyFileSync, watch } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
-import { app, BrowserWindow, dialog, ipcMain, powerSaveBlocker, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  nativeTheme,
+  powerSaveBlocker,
+  shell,
+} from 'electron';
 
 import { forgetRun, listRuns, readArchive, recordRun } from './lib/archive';
 import { EXTENSIONS, render } from './lib/exporters';
@@ -25,13 +33,25 @@ import {
 // in the folder every unpackaged Electron app shares.
 app.setName('hd-audio-transcriber');
 
+// The palette is dark and there is no theme switch, so the material has to be
+// dark too. Left to follow the system it turns pale the moment the Mac does,
+// and light grey glass under light grey text is not a transcript you can read.
+nativeTheme.themeSource = 'dark';
+
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 1000,
     height: 720,
     minWidth: 560,
     minHeight: 420,
-    backgroundColor: '#0E0F10', // paints before the page does, so no white flash
+    // Transparent so the material below shows through: anything opaque here
+    // sits on top of the vibrancy and there is no glass left to see.
+    backgroundColor: '#00000000',
+    // macOS blurs whatever is behind the window. 'active' keeps it that way
+    // when the window loses focus — the default greys out, which on a run you
+    // left in the background reads as the app having stalled.
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
