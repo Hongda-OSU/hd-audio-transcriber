@@ -15,6 +15,7 @@ const api: TranscriberApi = {
 
   listTranscripts: () => ipcRenderer.invoke('transcripts:list'),
   openTranscript: (target) => ipcRenderer.invoke('transcripts:open', target),
+  deleteTranscript: (target) => ipcRenderer.invoke('transcripts:delete', target),
 
   exportTranscript: (format, names) => ipcRenderer.invoke('transcript:export', format, names),
 

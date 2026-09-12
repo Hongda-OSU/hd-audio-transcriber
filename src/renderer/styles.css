@@ -211,12 +211,21 @@ body {
 }
 
 .stage {
-  /* `safe` matters: plain centring clips the top of a long transcript and puts
-     it out of scroll reach. This centres while the content fits and falls back
-     to top-aligned once it does not. */
-  justify-content: safe center;
+  /* Top down. A list that grows — runs, segments, settings cards — reads as a
+     list only if it starts in the same place whether it holds one row or
+     twenty; centring makes one run float in the middle of an empty window and
+     the next one push it around. */
+  justify-content: flex-start;
   padding: 24px 32px 32px;
   overflow-y: auto;
+}
+
+/* Except the first screen, which is a target to drop a file on rather than
+   content to read, and belongs in the middle of the window. `safe` matters:
+   plain centring would clip the top once the panel outgrows the stage and put
+   it out of scroll reach. */
+.stage:has(> #panelTranscribe:not([hidden])) {
+  justify-content: safe center;
 }
 
 .dropzone.is-disabled {
@@ -901,6 +910,12 @@ body {
   gap: 4px;
 }
 
+.run {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* A row is the whole control: the name is not a link inside something else,
    because everything on the line is about the same file. */
 .run__open {
@@ -949,6 +964,39 @@ body {
 
 .run__meta {
   grid-column: 1 / -1;
+}
+
+/* Out of sight until the row is under the pointer: this is a list of finished
+   work, and it should read as a list rather than as a column of buttons. The
+   keyboard has no pointer to hover with, so focus brings it back. */
+.run__delete {
+  -webkit-app-region: no-drag;
+  appearance: none;
+  flex: none;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12px;
+  cursor: default;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.run:hover .run__delete,
+.run__delete:focus-visible {
+  opacity: 1;
+}
+
+.run__delete:hover {
+  color: var(--danger);
+}
+
+.run__delete:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
 }
 
 

@@ -3,7 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain, powerSaveBlocker, shell } from 'electron';
 
-import { listRuns, readArchive, recordRun } from './lib/archive';
+import { forgetRun, listRuns, readArchive, recordRun } from './lib/archive';
 import { EXTENSIONS, render } from './lib/exporters';
 import { probeAudio } from './lib/probe';
 import { cancel, isRunning, transcribe, WhisperxCancelled, WhisperxError } from './lib/whisperx';
@@ -305,6 +305,31 @@ ipcMain.handle(
     });
 
     return withoutWords(result);
+  },
+);
+
+ipcMain.handle(
+  'transcripts:delete',
+  async (_event, target: string): Promise<IpcFailure | null> => {
+    // The same guard opening uses: only a file this app wrote, in the folder
+    // it wrote it to, and only one the folder still holds.
+    const runs = await listRuns(transcriptsDir());
+    const run = runs.find((r) => r.path === target);
+    if (!run) return { error: 'That transcript is no longer in the folder.' };
+
+    // The Trash, not unlink. An hour of audio is an hour of this machine's
+    // work and sometimes the only written copy of an interview; the Finder
+    // already knows how to undo this, which is worth more than a confirmation
+    // dialog that gets clicked through.
+    try {
+      await shell.trashItem(run.path);
+    } catch (err) {
+      return { error: `Could not delete ${run.file}: ${(err as Error).message}` };
+    }
+
+    await forgetRun(transcriptsDir(), run.file);
+    revealable.delete(run.path);
+    return null;
   },
 );
 

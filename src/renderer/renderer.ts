@@ -229,8 +229,15 @@ function renderRuns(runs: ArchivedRun[]): void {
     meta.className = 'run__meta';
     meta.textContent = facts.join(' · ');
 
+    const remove = document.createElement('button');
+    remove.className = 'run__delete';
+    remove.type = 'button';
+    remove.textContent = 'Delete';
+    remove.title = `Move ${run.file} to the Trash`;
+    remove.addEventListener('click', () => void deleteRun(run));
+
     open.append(name, when, meta);
-    item.append(open);
+    item.append(open, remove);
     runList.append(item);
   }
 
@@ -245,6 +252,18 @@ function renderRuns(runs: ArchivedRun[]): void {
 
 async function refreshRuns(): Promise<void> {
   renderRuns(await window.api.listTranscripts());
+}
+
+/** Deleting is a move to the Trash, which is why it asks nothing first: the
+ *  undo is already there, and a dialog on every row would only teach the
+ *  habit of dismissing it. */
+async function deleteRun(run: ArchivedRun): Promise<void> {
+  const failure = await window.api.deleteTranscript(run.path);
+  if (failure) {
+    runsMeta.textContent = failure.error;
+    return;
+  }
+  await refreshRuns();
 }
 
 /** Opening a past run puts the app in exactly the state a finished one does,

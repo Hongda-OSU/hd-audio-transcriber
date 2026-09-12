@@ -124,6 +124,8 @@ interface TranscriberApi {
   listTranscripts(): Promise<ArchivedRun[]>;
   /** Reads one back and makes it the transcript the app is working on. */
   openTranscript(target: string): Promise<TranscribeResult | IpcFailure>;
+  /** Moves one to the Trash and forgets it. Resolves to null when it worked. */
+  deleteTranscript(target: string): Promise<IpcFailure | null>;
   onProgress(listener: (progress: TranscribeProgress) => void): void;
 
   /** Renders the last run in main, where the word timings stayed, and asks

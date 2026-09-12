@@ -61,6 +61,24 @@ export async function recordRun(dir: string, file: string, entry: StoredRun): Pr
   }
 }
 
+/**
+ * Drops one run from the index.
+ *
+ * Deleting the file itself is the caller's business: this module reads and
+ * writes the folder's own bookkeeping and never removes what it describes.
+ */
+export async function forgetRun(dir: string, file: string): Promise<void> {
+  try {
+    const runs = await readIndex(dir);
+    if (!(file in runs)) return;
+    delete runs[file];
+    await writeIndex(dir, runs);
+  } catch {
+    // A leftover entry costs nothing: listRuns is driven by the folder, so an
+    // entry with no file behind it is never shown.
+  }
+}
+
 /** The timestamp this app puts in the file name: stem-YYYY-MM-DD-HH-MM-SS. */
 const STAMPED = /-(\d{4}-\d{2}-\d{2})-(\d{2})-(\d{2})-(\d{2})\.json$/;
 
