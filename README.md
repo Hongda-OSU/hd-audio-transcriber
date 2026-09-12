@@ -10,7 +10,7 @@ Personal tool, MIT licensed.
 - **Transcribes** speech to text
 - **Separates speakers** (`SPEAKER_00`, `SPEAKER_01`… — rename them to real names)
 - **Keeps timestamps** for every segment
-- **Exports** to txt, srt, vtt or json
+- **Exports** to txt, srt, vtt, json, or a bundle to hand to an LLM for cleanup
 
 ## Requirements
 
@@ -54,16 +54,7 @@ npm install     # once
 npm start       # compiles TypeScript, then launches the app
 ```
 
-`npm run dev` compiles, launches, and reloads on save — the renderer refreshes,
-and a main-process change relaunches the app.
-
-While a transcription is running it does neither, and says
-`[dev] reload deferred` until the run ends.
-
-```bash
-npm run build       # compile to dist/
-npm run typecheck   # types only, no output
-```
+`npm run dev` does the same and reloads on save.
 
 ## How it works
 
@@ -77,26 +68,6 @@ Electron ──spawn──> ~/.transcriber-env/bin/whisperx
 
 Every export format is generated from that JSON.
 
-## Layout
-
-```
-src/main.ts             Window, IPC, whisperx subprocess
-src/preload.ts          IPC bridge to the renderer
-src/types.d.ts          Shapes shared by main, preload and renderer
-src/lib/probe.ts        ffprobe → duration and container format
-src/lib/whisperx.ts     Options → command → segments
-src/lib/exporters.ts    Segments → txt, srt, vtt, json
-src/lib/config.ts       The token and the remembered options
-src/renderer/           UI: three tabs, described below
-dist/                   Compiled output, git-ignored
-setup_backend.sh        Backend installer
-scripts/dev.sh          Compile, launch, reload on save
-scripts/make-samples.sh Regenerates samples/ — test audio and its transcript
-build/make-icon.sh      Regenerates icon.png and icon.icns from icon-source.png
-```
-
-`build/icon.icns` is not in git — run `build/make-icon.sh` before packaging.
-
 ## The window
 
 Four tabs.
@@ -105,19 +76,13 @@ Four tabs.
   alignment, run it. Progress shows here, and the button becomes **Stop**.
 - **Transcript** — the one you are working on, with the segment and speaker
   counts and how long the run took. One field per speaker renames every line at
-  once; the export control writes the file out.
+  once, and the name is kept with the run; the export control writes the file
+  out.
 - **History** — every run ever finished. Open one and it comes back complete,
   export included, without touching the audio again. Delete puts it in the
   Trash, so it asks nothing first. Disabled while the folder is empty.
 - **Settings** — the HuggingFace token, where exports go, and where transcripts
   are kept. Both folders open in Finder when you click them.
-
-Every finished run keeps whisperx's own JSON in
-`~/Library/Application Support/hd-audio-transcriber/transcripts/`, with an
-`index.json` beside it recording the audio, the settings and the runtime —
-none of which whisperx's own output says. ⌘R clears the window, not the files.
-
-The names you type go in `index.json` too, so reopening a run brings them back.
 
 ## Exports
 
@@ -127,17 +92,6 @@ The names you type go in `index.json` too, so reopening a run brings them back.
 | **srt**, **vtt** | Subtitles |
 | **json** | Segments with both the label and the name given to it |
 | **cleanup bundle** | The draft plus the instructions for tidying it up, as one `.md` |
-
-A segment is one speaker's whole turn, too long to read as a subtitle, so srt
-and vtt cut it into cues of at most 42 columns or 7 seconds. With alignment off
-there are no word timings to cut on and each turn stays one long cue.
-
-Punctuation, paragraphing and the last of the speaker boundaries are decided by
-meaning, which this app has no way to ask about — on a real interview 56 of 58
-speaker changes had no pause at all, so there is nothing in the timings to cut
-on. The cleanup bundle is the handoff: the rules, who each label is, and the
-draft, in one file to give to an LLM. What comes back is the finished
-transcript; this app only makes the raw material.
 
 ## Status
 
@@ -159,10 +113,10 @@ transcript; this app only makes the raw material.
   about half the wall time — it is working, not stuck.
 - Speaker labels flicker. A quiet "mm" the transcription never writes down is
   still heard by diarization, and the words that fall in that window are handed
-  over mid-sentence. A turn change has a pause on both sides of it; this has
-  neither, so a stretch of five words or less with no pause either side is
-  given back. Anything longer is left alone: a bound that could merge a
-  question with its answer would cost more than the noise it cleans.
+  over mid-sentence. A stretch of five words or less between two runs of the
+  same speaker is given back to them. Anything longer is left alone — a bound
+  that could merge a question with its answer would cost more than the noise it
+  cleans — so the rest is the cleanup step's to fix.
 - Pin a speaker count only when you are sure of it. Pinning is absolute: name
   two on a recording with three people and the third is merged into the others,
   with no error and a transcript that reads as though it were right. Detect is
