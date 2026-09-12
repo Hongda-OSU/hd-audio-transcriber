@@ -108,18 +108,11 @@ Four tabs.
 
 ## Notes
 
-- The progress bar shows a real percentage while transcribing, then only a
-  phase name. Alignment and diarization report nothing, and diarization is
-  about half the wall time — it is working, not stuck.
-- Speaker labels flicker. A quiet "mm" the transcription never writes down is
-  still heard by diarization, and the words that fall in that window are handed
-  over mid-sentence. A stretch of five words or less between two runs of the
-  same speaker is given back to them. Anything longer is left alone — a bound
-  that could merge a question with its answer would cost more than the noise it
-  cleans — so the rest is the cleanup step's to fix.
-- Pin a speaker count only when you are sure of it. Pinning is absolute: name
-  two on a recording with three people and the third is merged into the others,
-  with no error and a transcript that reads as though it were right. Detect is
-  the default for that reason.
-- Long files are slow and memory-hungry. Stay plugged in. The app holds the
-  machine awake for the length of a run, but closing the lid still sleeps.
+- **The percentage stops before the run does.** Alignment and diarization
+  report nothing and take about half the time — it is working, not stuck.
+- **Speaker boundaries are rough.** A few words either side of a turn often go
+  to the wrong person. The cleanup step fixes them; nothing here can.
+- **Leave the speaker count on Detect** unless you are certain. Pinning two on
+  a recording with three merges the third in silently, and it reads as right.
+- **Long files are slow.** Stay plugged in — the app blocks sleep, but closing
+  the lid still sleeps.
