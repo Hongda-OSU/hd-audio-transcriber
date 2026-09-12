@@ -72,6 +72,14 @@ let busy = false;
  */
 let speakerNames: SpeakerNames = {};
 
+/**
+ * The archive file the Transcript tab is showing, when it is showing one.
+ * Deleting a run has to know whether it is the one on screen: a transcript
+ * left standing after its file went to the Trash reads as a delete that did
+ * not work.
+ */
+let shownPath: string | null = null;
+
 /* --- formatting -------------------------------------------------------- */
 
 function formatDuration(seconds: number | null): string {
@@ -181,6 +189,7 @@ function clearFile(): void {
 }
 
 function clearResult(): void {
+  shownPath = null;
   segmentList.replaceChildren();
   speakerFields.replaceChildren();
   speakerFields.hidden = true;
@@ -263,6 +272,7 @@ async function deleteRun(run: ArchivedRun): Promise<void> {
     runsMeta.textContent = failure.error;
     return;
   }
+  if (run.path === shownPath) clearResult();
   await refreshRuns();
 }
 
@@ -329,6 +339,7 @@ function renderSpeakerFields(segments: Segment[]): void {
 }
 
 function renderResult(result: TranscribeResult): void {
+  shownPath = result.savedTo ?? null;
   segmentList.replaceChildren();
 
   for (const segment of result.segments) {

@@ -329,6 +329,10 @@ ipcMain.handle(
 
     await forgetRun(transcriptsDir(), run.file);
     revealable.delete(run.path);
+
+    // Export renders from here, not from the window, so a deleted run left in
+    // lastRun would still write itself out to a file after its own was binned.
+    if (lastRun?.result.savedTo === run.path) lastRun = null;
     return null;
   },
 );
