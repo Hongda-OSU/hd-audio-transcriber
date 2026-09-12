@@ -120,7 +120,7 @@
           </label>
 
           <label class="options__field">
-            <span class="options__label">Model<span class="hint"><button class="hint__button" type="button" aria-label="About the model choices"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">large-v3 is the most accurate. turbo is several times faster for a small loss. medium and small are for quick checks.</span></span></span>
+            <span class="options__label">Model<span class="hint"><button class="hint__button" type="button" aria-label="About the model choices"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">large-v3 hears names more accurately. large-v2 writes the quiet "mm" a listener makes, which is what speaker labels tear on when it is missing. Neither is better at both.</span></span></span>
             <select id="optModel" class="options__select">
               <option value="large-v3">large-v3</option>
               <!-- v2 is not the older v3. On Chinese it writes the quiet "mm"
@@ -128,9 +128,6 @@
                    boundaries tear on. It mishears some names v3 gets right, so
                    it is a choice rather than an upgrade. -->
               <option value="large-v2">large-v2</option>
-              <option value="large-v3-turbo">large-v3-turbo</option>
-              <option value="medium">medium</option>
-              <option value="small">small</option>
             </select>
           </label>
 
