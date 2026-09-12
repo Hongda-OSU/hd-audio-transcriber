@@ -107,8 +107,8 @@ Four tabs.
   counts and how long the run took. One field per speaker renames every line at
   once; the export control writes the file out.
 - **History** — every run ever finished. Open one and it comes back complete,
-  export included, without touching the audio again. Disabled while the folder
-  is empty.
+  export included, without touching the audio again. Delete puts it in the
+  Trash, so it asks nothing first. Disabled while the folder is empty.
 - **Settings** — the HuggingFace token, where exports go, and where transcripts
   are kept. Both folders open in Finder when you click them.
 
@@ -117,7 +117,7 @@ Every finished run keeps whisperx's own JSON in
 `index.json` beside it recording the audio, the settings and the runtime —
 none of which whisperx's own output says. ⌘R clears the window, not the files.
 
-Speaker names last as long as the window does.
+The names you type go in `index.json` too, so reopening a run brings them back.
 
 ## Exports
 
@@ -126,12 +126,18 @@ Speaker names last as long as the window does.
 | **txt** | Timestamp and speaker on one line, what they said on the next |
 | **srt**, **vtt** | Subtitles |
 | **json** | Segments with both the label and the name given to it |
+| **cleanup bundle** | The draft plus the instructions for tidying it up, as one `.md` |
 
 A segment is one speaker's whole turn, too long to read as a subtitle, so srt
 and vtt cut it into cues of at most 42 columns or 7 seconds. With alignment off
 there are no word timings to cut on and each turn stays one long cue.
 
-docx comes with M5, where the transcript gets handed off.
+Punctuation, paragraphing and the last of the speaker boundaries are decided by
+meaning, which this app has no way to ask about — on a real interview 56 of 58
+speaker changes had no pause at all, so there is nothing in the timings to cut
+on. The cleanup bundle is the handoff: the rules, who each label is, and the
+draft, in one file to give to an LLM. What comes back is the finished
+transcript; this app only makes the raw material.
 
 ## Status
 
@@ -141,7 +147,7 @@ docx comes with M5, where the transcript gets handed off.
 | M2 | whisperx wired up — text, speakers, timestamps | ☑ |
 | M3 | Options panel (language, model, speakers, alignment) + progress | ☑ |
 | M4 | Rename speakers, export | ☑ |
-| M5 | Open a past run, hand the transcript off for cleanup | ☐ |
+| M5 | Open a past run, hand the transcript off for cleanup | ☑ |
 | M6 | Glossary and a queue — long recordings, run unattended | ☐ |
 | M7 | Review tab — play the audio against the transcript | ☐ |
 | M8 | Packaged `.app` | ☐ |
