@@ -11,6 +11,10 @@
   --elevated: rgba(255, 255, 255, 0.09);
   --border: rgba(255, 255, 255, 0.12);
   --field: rgba(0, 0, 0, 0.22);
+  /* Anything that floats over the page pays for its own background. A tint
+     works on a surface because there is only the material behind it; over a
+     line of text it leaves both readable and neither legible. */
+  --overlay: #202326;
   --text: #f2f3f4;
   --text-dim: #8e9298;
   --accent: #f2f3f4;
@@ -686,7 +690,7 @@ body {
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--elevated);
+  background: var(--overlay);
   color: var(--text);
 
   font-size: 12px;
