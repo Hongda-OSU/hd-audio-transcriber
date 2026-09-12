@@ -342,6 +342,7 @@ const FILTERS: Record<ExportFormat, string> = {
   srt: 'SubRip subtitles',
   vtt: 'WebVTT subtitles',
   json: 'JSON',
+  cleanup: 'Markdown',
 };
 
 ipcMain.handle(
@@ -379,7 +380,12 @@ ipcMain.handle(
     try {
       await writeFile(
         filePath,
-        render(format, { segments: result.segments, language: result.language, names }),
+        render(format, {
+          segments: result.segments,
+          language: result.language,
+          names,
+          ...(audioPath ? { audio: basename(audioPath) } : {}),
+        }),
         'utf8',
       );
     } catch (err) {

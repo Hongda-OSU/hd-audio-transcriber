@@ -1,8 +1,14 @@
 // Turns a finished transcript into the file formats it leaves the app in.
 //
+// cleanup lives in its own file: it is a long piece of the user's own prose
+// rather than a format, and keeping it here would bury the formats under it.
+//
 // No Electron here, the way probe.ts and whisperx.ts have none: a format is a
 // pure function of segments, and one that can be tested without a window is
 // one that gets tested.
+
+import { toCleanup } from './cleanup';
+import { speakerName } from './speakers';
 
 /** What every renderer below is handed. */
 export interface ExportInput {
@@ -11,6 +17,9 @@ export interface ExportInput {
   language?: string;
   /** SPEAKER_00 → "Interviewer". Labels left out keep their own name. */
   names?: SpeakerNames;
+  /** Where the recording was. Only the cleanup bundle says so, and only to
+   *  name the thing being worked on; an archived run may not know it. */
+  audio?: string;
 }
 
 export const EXTENSIONS: Record<ExportFormat, string> = {
@@ -18,24 +27,12 @@ export const EXTENSIONS: Record<ExportFormat, string> = {
   srt: 'srt',
   vtt: 'vtt',
   json: 'json',
+  cleanup: 'md',
 };
 
-/**
- * The name to print for a diarization label.
- *
- * Unlike the renderer's own label, an unlabelled segment gets an empty string
- * rather than "Unknown": a transcription run without diarization has no
- * speakers at all, and prefixing every line with "Unknown:" would be noise.
- */
-export function speakerName(speaker: string | undefined, names: SpeakerNames = {}): string {
-  if (!speaker) return '';
-
-  const given = names[speaker]?.trim();
-  if (given) return given;
-
-  const match = /(\d+)$/.exec(speaker);
-  return match?.[1] ? `Speaker ${Number(match[1]) + 1}` : speaker;
-}
+// Re-exported: it was defined here before cleanup.ts needed it too, and the
+// callers that import it from here should not have to care that it moved.
+export { speakerName };
 
 /* --- time -------------------------------------------------------------- */
 
@@ -237,6 +234,7 @@ const RENDERERS: Record<ExportFormat, (input: ExportInput) => string> = {
   srt: toSrt,
   vtt: toVtt,
   json: toJson,
+  cleanup: toCleanup,
 };
 
 export function render(format: ExportFormat, input: ExportInput): string {

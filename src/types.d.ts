@@ -92,7 +92,9 @@ interface IpcFailure {
   error: string;
 }
 
-type ExportFormat = 'txt' | 'srt' | 'vtt' | 'json';
+/** 'cleanup' is the handoff: the rules, this recording, and the draft in one
+ *  file to hand to the step that punctuates and fixes speaker boundaries. */
+type ExportFormat = 'txt' | 'srt' | 'vtt' | 'json' | 'cleanup';
 
 /** SPEAKER_00 → "Interviewer". Labels left out keep their own name. */
 type SpeakerNames = Record<string, string>;
