@@ -103,8 +103,7 @@ Four tabs.
 | M4 | Rename speakers, export | ☑ |
 | M5 | Open a past run, hand the transcript off for cleanup | ☑ |
 | M6 | Glossary and a queue — long recordings, run unattended | ☐ |
-| M7 | Review tab — play the audio against the transcript | ☐ |
-| M8 | Packaged `.app` | ☐ |
+| M7 | Packaged `.app` | ☐ |
 
 ## Notes
 
