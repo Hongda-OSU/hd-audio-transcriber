@@ -291,6 +291,20 @@ ipcMain.handle(
 
 ipcMain.handle('transcripts:list', (): Promise<ArchivedRun[]> => listRuns(transcriptsDir()));
 
+/**
+ * Keeps the names the user typed with the run they belong to.
+ *
+ * In the index rather than in the archive file: that file is whisperx's own
+ * output, and leaving it untouched is the reason it is worth keeping at all.
+ * Silent when there is no archive — a run whose JSON was never written has
+ * nothing for a name to be a name of.
+ */
+ipcMain.handle('transcripts:rename', async (_event, names: SpeakerNames): Promise<void> => {
+  const saved = lastRun?.result.savedTo;
+  if (!saved) return;
+  await recordRun(transcriptsDir(), basename(saved), { names });
+});
+
 ipcMain.handle(
   'transcripts:open',
   async (_event, target: string): Promise<TranscribeResult | IpcFailure> => {

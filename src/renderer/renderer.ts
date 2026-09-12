@@ -329,6 +329,9 @@ function renderSpeakerFields(segments: Segment[]): void {
     input.spellcheck = false;
     input.value = speakerNames[speaker] ?? '';
     input.addEventListener('input', () => applySpeakerName(speaker, input.value));
+    // On change, not on input: the transcript should follow every keystroke,
+    // but the disk should not — a name is finished when the field is left.
+    input.addEventListener('change', () => void window.api.saveSpeakerNames(speakerNames));
 
     field.append(input);
     speakerFields.append(field);
