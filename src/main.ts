@@ -50,6 +50,16 @@ function createWindow(): BrowserWindow {
 }
 
 /**
+ * How many transcribe handlers have not returned yet.
+ *
+ * Not the same question as whether whisperx is running: the child exits first,
+ * and only then is its JSON parsed, archived, and handed to the window. A run
+ * that has just finished is at its most valuable and least protected in that
+ * gap — hours of work, written nowhere yet.
+ */
+let inFlight = 0;
+
+/**
  * Reloads the window when `tsc --watch` rewrites dist/. Renderer changes just
  * reload the page; anything in the main process needs the whole app back, so
  * it relaunches. Development only — a packaged app never watches itself.
@@ -67,7 +77,10 @@ function watchForReload(win: BrowserWindow): void {
     // and with it the promise waiting on the result, while a relaunch calls
     // cancel() and kills whisperx outright — either one throws away work that
     // can be hours old, and neither leaves a trace of why.
-    if (isRunning()) {
+    // inFlight as well as isRunning: waiting only for the child let the
+    // relaunch land in the moment between whisperx exiting and its result
+    // being archived, which is the one moment that loses the whole run.
+    if (isRunning() || inFlight > 0) {
       console.log('[dev] reload deferred — a transcription is running');
       timer = setTimeout(apply, 2000);
       return;
@@ -237,6 +250,7 @@ ipcMain.handle(
     }
 
     try {
+      inFlight += 1;
       // Remember what was used, so the next run opens on the same choices.
       setSettings(settings);
       stayAwake();
@@ -269,6 +283,7 @@ ipcMain.handle(
       if (err instanceof WhisperxError) return { error: err.message };
       return { error: `Transcription failed: ${(err as Error).message}` };
     } finally {
+      inFlight -= 1;
       letSleep();
     }
   },
