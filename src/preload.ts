@@ -33,6 +33,9 @@ const api: TranscriberApi = {
   getConfigPath: () => ipcRenderer.invoke('config:path'),
   getTranscriptsPath: () => ipcRenderer.invoke('config:transcriptsPath'),
 
+  getGlossary: () => ipcRenderer.invoke('config:getGlossary'),
+  setGlossary: (text) => ipcRenderer.invoke('config:setGlossary', text),
+
   getExportDir: () => ipcRenderer.invoke('config:getExportDir'),
   chooseExportDir: () => ipcRenderer.invoke('config:chooseExportDir'),
   clearExportDir: () => ipcRenderer.invoke('config:clearExportDir'),

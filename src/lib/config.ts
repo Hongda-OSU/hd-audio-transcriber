@@ -13,6 +13,8 @@ interface Config {
   settings?: Partial<TranscribeSettings>;
   /** Where exports go. Unset means beside the recording. */
   exportDir?: string;
+  /** Names and terms to offer the model, one per line as the user typed them. */
+  glossary?: string;
 }
 
 // Alignment defaults on: without it whisperx gives a whole segment one
@@ -79,6 +81,23 @@ export function setExportDir(dir: string): void {
   const next: Config = { ...read() };
   if (dir) next.exportDir = dir;
   else delete next.exportDir;
+  writeFileSync(configPath(), `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
+}
+
+/**
+ * The glossary as typed. Kept as one string rather than a list: it is edited
+ * as a block of text, and splitting it on save would lose the blank lines and
+ * spacing the user left while thinking.
+ */
+export function getGlossary(): string {
+  return read().glossary ?? '';
+}
+
+export function setGlossary(text: string): void {
+  const next: Config = { ...read() };
+  const trimmed = text.trim();
+  if (trimmed) next.glossary = trimmed;
+  else delete next.glossary;
   writeFileSync(configPath(), `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
 }
 

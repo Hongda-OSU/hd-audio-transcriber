@@ -153,6 +153,10 @@ interface TranscriberApi {
   /** Where finished runs are kept. Shown in settings, and openable. */
   getTranscriptsPath(): Promise<string>;
 
+  /** Names and terms offered to the model, one per line. '' when unset. */
+  getGlossary(): Promise<string>;
+  setGlossary(text: string): Promise<void>;
+
   /** The chosen export folder, or '' when exports go beside the recording. */
   getExportDir(): Promise<string>;
   /** Asks for a folder. Returns the chosen one, or '' if the dialog closed. */

@@ -17,9 +17,11 @@ import { probeAudio } from './lib/probe';
 import { cancel, isRunning, transcribe, WhisperxCancelled, WhisperxError } from './lib/whisperx';
 import {
   getExportDir,
+  getGlossary,
   getSettings,
   getToken,
   setExportDir,
+  setGlossary,
   setSettings,
   setToken,
   tokenFile,
@@ -179,6 +181,9 @@ ipcMain.handle('config:setToken', (_event, token: string) => setToken(token));
 ipcMain.handle('config:path', () => tokenFile());
 ipcMain.handle('config:transcriptsPath', () => transcriptsDir());
 
+ipcMain.handle('config:getGlossary', (): string => getGlossary());
+ipcMain.handle('config:setGlossary', (_event, text: string): void => setGlossary(text));
+
 ipcMain.handle('config:getExportDir', () => getExportDir());
 ipcMain.handle('config:clearExportDir', () => setExportDir(''));
 
@@ -276,7 +281,13 @@ ipcMain.handle(
       stayAwake();
 
       const result = await transcribe(
-        { file: filePath, hfToken, archiveDir: transcriptsDir(), ...settings },
+        {
+          file: filePath,
+          hfToken,
+          glossary: getGlossary(),
+          archiveDir: transcriptsDir(),
+          ...settings,
+        },
         (progress) => {
           // The window can be gone by the time a late update arrives.
           if (!event.sender.isDestroyed()) event.sender.send('transcribe:progress', progress);

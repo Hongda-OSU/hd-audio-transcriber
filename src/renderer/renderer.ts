@@ -35,6 +35,10 @@ const saveTokenButton = document.getElementById('saveToken') as HTMLButtonElemen
 const tokenState = document.getElementById('tokenState') as HTMLElement;
 const tokenPath = document.getElementById('tokenPath') as HTMLElement;
 
+const glossaryInput = document.getElementById('glossary') as HTMLTextAreaElement;
+const saveGlossaryButton = document.getElementById('saveGlossary') as HTMLButtonElement;
+const glossaryState = document.getElementById('glossaryState') as HTMLElement;
+
 const transcriptsPath = document.getElementById('transcriptsPath') as HTMLElement;
 const exportDirLine = document.getElementById('exportDir') as HTMLElement;
 const chooseExportDir = document.getElementById('chooseExportDir') as HTMLButtonElement;
@@ -690,6 +694,22 @@ clearExportDir.addEventListener('click', () => {
   void window.api.clearExportDir().then(refreshFolders);
 });
 
+/** Unlike the token, the glossary is shown back in full: it is the thing being
+ *  edited, and a masked one could not be added to. */
+function showGlossaryCount(): void {
+  const terms = glossaryInput.value.split('\n').filter((line) => line.trim()).length;
+  glossaryState.textContent = terms ? `${terms} term${terms === 1 ? '' : 's'}` : 'Not used.';
+}
+
+saveGlossaryButton.addEventListener('click', () => {
+  void window.api.setGlossary(glossaryInput.value).then(async () => {
+    // Read back rather than trusting the field: main trims it, and the box
+    // should show what a run will actually be given.
+    glossaryInput.value = await window.api.getGlossary();
+    showGlossaryCount();
+  });
+});
+
 saveTokenButton.addEventListener('click', () => {
   const value = tokenInput.value.trim();
   // Saving the stand-in would store bullets as the token.
@@ -720,6 +740,10 @@ for (const [name, { tab }] of Object.entries(TABS)) {
 
 void refreshTokenState();
 void refreshFolders();
+void window.api.getGlossary().then((text) => {
+  glossaryInput.value = text;
+  showGlossaryCount();
+});
 // Decides whether the tab is even available, so it cannot wait for a click.
 void refreshRuns();
 void window.api.getSettings().then(applySettings);

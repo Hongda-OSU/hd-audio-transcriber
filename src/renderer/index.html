@@ -252,6 +252,26 @@
         </section>
 
         <section class="card">
+          <h2 class="card__title">Glossary</h2>
+          <p class="card__hint">
+            Names and terms the recording uses, one per line. They are offered to
+            the model while it listens, which is the only place a proper noun can
+            still be got right — nothing downstream knows how a name is spelled.
+            It is a hint, not a replacement: it shifts the whole transcript, not
+            only these words. Leave it empty and nothing is passed.
+          </p>
+          <textarea
+            id="glossary"
+            class="glossary__input"
+            rows="5"
+            spellcheck="false"
+            placeholder="One per line"
+          ></textarea>
+          <button id="saveGlossary" class="button button--quiet" type="button">Save</button>
+          <p id="glossaryState" class="card__state"></p>
+        </section>
+
+        <section class="card">
           <h2 class="card__title">Transcripts</h2>
           <p class="card__hint">
             Every finished run is kept here, and the History tab lists them.

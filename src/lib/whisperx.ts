@@ -27,6 +27,12 @@ export interface TranscribeOptions extends TranscribeSettings {
   file: string;
   hfToken: string;
   /**
+   * Names and terms to offer the model, one per line. Not part of
+   * TranscribeSettings: those are the choices made per run in the window, and
+   * this is typed once in Settings and forgotten, the way the token is.
+   */
+  glossary?: string;
+  /**
    * Where to keep whisperx's own JSON. Passed in rather than resolved here so
    * this module stays free of Electron. Without it a run leaves nothing behind:
    * the temp directory is deleted and the result lives only in the window.
@@ -69,6 +75,21 @@ export function resolveWhisperx(): string {
   return `${resolveEnvDir()}/bin/whisperx`;
 }
 
+/**
+ * The glossary as one line for `--hotwords`, or nothing at all.
+ *
+ * Blank when nothing is typed, and the flag is then left off entirely: an
+ * empty hint is still a hint, and whisperx would put the empty string in front
+ * of the audio rather than nothing.
+ */
+export function hotwords(glossary: string | undefined): string {
+  return (glossary ?? '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
 /** Split out from the spawn so the command can be asserted without running it. */
 export function buildArgs(opts: TranscribeOptions, outputDir: string): string[] {
   const args = [opts.file, '--model', opts.model];
@@ -87,6 +108,12 @@ export function buildArgs(opts: TranscribeOptions, outputDir: string): string[] 
   if (opts.speakers > 0) {
     args.push('--min_speakers', String(opts.speakers), '--max_speakers', String(opts.speakers));
   }
+
+  // Offered to the model while it listens. Not --initial_prompt, which only
+  // reaches the first window and, on Chinese, sends Whisper into a
+  // hallucination loop that replaces the transcript with training-data litter.
+  const hint = hotwords(opts.glossary);
+  if (hint) args.push('--hotwords', hint);
 
   args.push(
     '--print_progress', 'True',

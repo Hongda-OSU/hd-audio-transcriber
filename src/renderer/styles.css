@@ -479,6 +479,30 @@ body {
   color: var(--text-dim);
 }
 
+/* --- glossary ----------------------------------------------------------- */
+
+.glossary__input {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  /* A term per line, so growing sideways would only hide them. */
+  resize: vertical;
+  user-select: text;
+}
+
+.glossary__input:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
 .card__path {
   margin: 4px 0 0;
   font-size: 11px;
