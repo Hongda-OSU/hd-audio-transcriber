@@ -177,6 +177,67 @@ const MAX_FLICKER_WORDS = 5;
 // of those through.
 const FLICKER_PAUSE = 0.25;
 
+// A word this many times longer than the ones around it was not spoken that
+// slowly. At a turn change with no silence in it, the aligner has nothing to
+// end the last word on, so it stretches that one character across the gap and
+// into the next person's first syllables — and diarization, hearing mostly the
+// next person inside those timings, labels it as theirs. 「含义吗」 comes back
+// as 「含义」 and 「吗」 said by two people, the 吗 marked 1.7s long where its
+// neighbours run 0.24s.
+const STRETCH_RATIO = 4;
+
+// Measured against the neighbours rather than a fixed duration: people speed
+// up and slow down, and a word that is long for a fast passage is ordinary in
+// a slow one.
+const LOCAL_WORDS = 12;
+
+function duration(word: RawWord): number {
+  return (word.end ?? 0) - (word.start ?? 0);
+}
+
+/** The median length of the words around this one, itself excluded. */
+function localMedian(words: RawWord[], index: number): number {
+  const lengths: number[] = [];
+  const from = Math.max(0, index - LOCAL_WORDS);
+  const to = Math.min(words.length, index + LOCAL_WORDS);
+  for (let i = from; i < to; i += 1) {
+    const word = words[i];
+    if (i !== index && word?.start !== undefined) lengths.push(duration(word));
+  }
+  lengths.sort((a, b) => a - b);
+  return lengths[Math.floor(lengths.length / 2)] ?? 0.2;
+}
+
+/**
+ * Gives back the first word of a turn when its timings say it was stretched to
+ * get there.
+ *
+ * Only the first word of a run: that is the one the aligner had to stretch, and
+ * the only one whose label the stretch explains. Everything after it started
+ * inside the new speaker's own audio.
+ */
+function unstretch(words: RawWord[]): void {
+  const starts: number[] = [];
+  for (let i = 1; i < words.length; i += 1) {
+    if (words[i]?.speaker !== words[i - 1]?.speaker) starts.push(i);
+  }
+
+  // Collected first, applied after: measuring against labels this pass has
+  // already changed would let one long word walk a boundary along the line.
+  const giveBack: number[] = [];
+  for (const start of starts) {
+    const first = words[start];
+    if (!first || first.start === undefined) continue;
+    if (duration(first) >= localMedian(words, start) * STRETCH_RATIO) giveBack.push(start);
+  }
+
+  for (const start of giveBack) {
+    const word = words[start];
+    const previous = words[start - 1];
+    if (word && previous) word.speaker = previous.speaker;
+  }
+}
+
 /**
  * Reassigns stretches too short to be speech to whoever was talking either
  * side of them.
@@ -238,7 +299,12 @@ function splitBySpeaker(rawSegments: RawSegment[]): Segment[] {
   // Across the whole recording, not per segment: whisperx's segment boundaries
   // have nothing to do with who is speaking, and a flicker at the edge of one
   // would be invisible from inside it.
-  despeckle(rawSegments.flatMap((seg) => seg.words ?? []));
+  const words = rawSegments.flatMap((seg) => seg.words ?? []);
+  // Boundaries first, then flicker: putting a stretched word back where it
+  // belongs can leave a run of two or three that is flicker, and despeckle is
+  // what that is for.
+  unstretch(words);
+  despeckle(words);
 
   const out: Segment[] = [];
   // Everything built from words[] keeps them, so exports can cut a turn into
