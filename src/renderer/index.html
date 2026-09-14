@@ -77,10 +77,8 @@
           </svg>
         </button>
         <span class="hint__tip" role="tooltip"
-          >⌘R starts over — it reloads the window and clears the file and
-          transcript. ⌘O opens a file. Finished runs are kept on disk — the
-          History tab lists them, and every path in the app opens in Finder
-          when you click it.</span
+          >⌘O opens a file. ⌘R clears everything and starts over — finished
+          runs stay in History.</span
         >
       </span>
     </header>
@@ -113,7 +111,7 @@
         <section class="card card--options">
         <div class="options">
           <label class="options__field">
-            <span class="options__label">Language<span class="hint"><button class="hint__button" type="button" aria-label="About the language setting"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Naming the language beats Detect: detection runs on the opening seconds and can be wrong on a quiet start.</span></span></span>
+            <span class="options__label">Language<span class="hint"><button class="hint__button" type="button" aria-label="About the language setting"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Set the language if you know it. Detect guesses from the first few seconds, so a quiet opening can get it wrong.</span></span></span>
             <select id="optLanguage" class="options__select">
               <option value="zh">Chinese</option>
               <option value="en">English</option>
@@ -124,7 +122,7 @@
           </label>
 
           <label class="options__field">
-            <span class="options__label">Model<span class="hint"><button class="hint__button" type="button" aria-label="About the model choices"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">large-v3 hears names more accurately. large-v2 writes the quiet "mm" a listener makes, which is what speaker labels tear on when it is missing. Neither is better at both.</span></span></span>
+            <span class="options__label">Model<span class="hint"><button class="hint__button" type="button" aria-label="About the model choices"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Nearly the same on most recordings. large-v3 spells more names right; large-v2 keeps the quiet "mm" that helps mark who is speaking. If one comes out badly, try the other.</span></span></span>
             <select id="optModel" class="options__select">
               <option value="large-v3">large-v3</option>
               <!-- v2 is not the older v3. On Chinese it writes the quiet "mm"
@@ -136,7 +134,7 @@
           </label>
 
           <label class="options__field">
-            <span class="options__label">Speakers<span class="hint"><button class="hint__button" type="button" aria-label="About the speaker count"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Detect works this out for itself. Pin a number only when you are certain of it: pinning is absolute, so on a recording with more people than you named, the extra ones are merged into the others silently.</span></span></span>
+            <span class="options__label">Speakers<span class="hint"><button class="hint__button" type="button" aria-label="About the speaker count"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Leave it on Detect unless you are sure. A number you set is taken literally — pick two on a recording with three people, and the third is merged into the others with no warning.</span></span></span>
             <select id="optSpeakers" class="options__select">
               <option value="0">Detect</option>
               <option value="1">1</option>
@@ -152,7 +150,7 @@
         <div class="options__action">
           <label class="toggle">
             <input id="optAlign" type="checkbox" />
-            <span>Word-level alignment</span><span class="hint"><button class="hint__button" type="button" aria-label="About word-level alignment"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Timestamps every word, which is the only place a speaker change inside a segment survives. Turn it off and a question and its answer come back as one person. Costs roughly 1.9x realtime instead of 1.2x.</span></span>
+            <span>Word-level alignment</span><span class="hint"><button class="hint__button" type="button" aria-label="About word-level alignment"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M6.3 6.1a1.75 1.75 0 1 1 2.05 2.06c-.4.09-.6.4-.6.8v.4" /><circle cx="8" cy="12.1" r="0.55" class="hint__dot" /></svg></button><span class="hint__tip" role="tooltip">Catches a speaker change in the middle of a sentence. Turn it off and a question and its answer come back as one person.</span></span>
           </label>
 
           <button id="start" class="button button--primary" type="button" disabled>
