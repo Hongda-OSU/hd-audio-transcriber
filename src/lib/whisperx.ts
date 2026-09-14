@@ -76,6 +76,19 @@ export function resolveWhisperx(): string {
 }
 
 /**
+ * YYYY-MM-DD-HH-MM-SS in the clock the user is reading, for the file name a
+ * finished run is filed under.
+ *
+ * Built by hand rather than from `toISOString`, which is UTC: that stamped an
+ * 11pm run as 04:00 the next day, and History then filed it under tomorrow.
+ */
+export function localStamp(at: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const date = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`;
+  return `${date}-${pad(at.getHours())}-${pad(at.getMinutes())}-${pad(at.getSeconds())}`;
+}
+
+/**
  * The glossary as one line for `--hotwords`, or nothing at all.
  *
  * Blank when nothing is typed, and the flag is then left off entirely: an
@@ -512,8 +525,7 @@ export async function transcribe(
         // mkdir leaves an existing directory alone, and umask can trim the mode
         // of a new one. The file names alone say who was interviewed.
         await chmod(opts.archiveDir, 0o700);
-        const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
-        savedTo = join(opts.archiveDir, `${stem}-${stamp}.json`);
+        savedTo = join(opts.archiveDir, `${stem}-${localStamp(new Date())}.json`);
         await writeFile(savedTo, raw, { mode: 0o600 });
       } catch {
         // A transcript that cannot be filed is still a transcript; the window

@@ -12,7 +12,7 @@
 import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { parseTranscript } from './whisperx';
+import { localStamp, parseTranscript } from './whisperx';
 
 const INDEX = 'index.json';
 
@@ -112,7 +112,12 @@ export async function listRuns(dir: string): Promise<ArchivedRun[]> {
     let savedAt = savedAtFromName(file);
     if (!savedAt) {
       try {
-        savedAt = (await stat(path)).mtime.toISOString().replace('T', ' ').slice(0, 19);
+        // Local, like the stamp a name carries: the two are sorted against
+        // each other, so they have to be the same clock.
+        savedAt = localStamp((await stat(path)).mtime).replace(
+          /-(\d\d)-(\d\d)-(\d\d)$/,
+          ' $1:$2:$3',
+        );
       } catch {
         continue; // Gone between the listing and the stat.
       }
