@@ -571,6 +571,19 @@ body {
   outline-offset: -1px;
 }
 
+/* Count on the left, Save on the right. The state is a <p> with a top margin
+   of its own, which would push the button off the baseline. */
+.glossary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.glossary__row .card__state {
+  margin: 0;
+}
+
 .card__path {
   margin: 4px 0 0;
   font-size: 11px;

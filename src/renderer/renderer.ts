@@ -686,7 +686,7 @@ async function refreshFolders(): Promise<void> {
   if (chosen) {
     showPathLine(exportDirLine, '', chosen);
   } else {
-    exportDirLine.textContent = 'Beside the recording';
+    exportDirLine.textContent = 'Same folder as the audio file';
     exportDirLine.hidden = false;
   }
   chooseExportDir.textContent = chosen ? 'Change…' : 'Choose…';
@@ -809,7 +809,10 @@ clearExportDir.addEventListener('click', () => {
  *  edited, and a masked one could not be added to. */
 function showGlossaryCount(): void {
   const terms = glossaryInput.value.split('\n').filter((line) => line.trim()).length;
-  glossaryState.textContent = terms ? `${terms} term${terms === 1 ? '' : 's'}` : 'Not used.';
+  // Nothing at all when the box is empty: an empty box is already the whole
+  // message, and a line saying so is one more thing to read on a card that has
+  // plenty.
+  glossaryState.textContent = terms ? `${terms} term${terms === 1 ? '' : 's'}` : '';
 }
 
 saveGlossaryButton.addEventListener('click', () => {
