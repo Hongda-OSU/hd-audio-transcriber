@@ -73,7 +73,8 @@ Every export format is generated from that JSON.
 Four tabs.
 
 - **Transcribe** — drop a file, set language, model, speaker count and
-  alignment, run it. Progress shows here, and the button becomes **Stop**.
+  alignment, run it. Progress shows here, and the button becomes **Stop**. Drop
+  several and they queue, running one at a time until they are done.
 - **Transcript** — the one you are working on, with the segment and speaker
   counts and how long the run took. One field per speaker renames every line at
   once, and the name is kept with the run; the export control writes the file
@@ -81,8 +82,9 @@ Four tabs.
 - **History** — every run ever finished. Open one and it comes back complete,
   export included, without touching the audio again. Delete puts it in the
   Trash, so it asks nothing first. Disabled while the folder is empty.
-- **Settings** — the HuggingFace token, where exports go, and where transcripts
-  are kept. Both folders open in Finder when you click them.
+- **Settings** — the HuggingFace token, a glossary of names the recording uses,
+  where exports go, and where transcripts are kept. Both folders open in Finder
+  when you click them.
 
 ## Exports
 
@@ -102,7 +104,7 @@ Four tabs.
 | M3 | Options panel (language, model, speakers, alignment) + progress | ☑ |
 | M4 | Rename speakers, export | ☑ |
 | M5 | Open a past run, hand the transcript off for cleanup | ☑ |
-| M6 | Glossary and a queue — long recordings, run unattended | ☐ |
+| M6 | Glossary and a queue — long recordings, run unattended | ☑ |
 | M7 | Packaged `.app` | ☐ |
 
 ## Notes
@@ -111,6 +113,9 @@ Four tabs.
   report nothing and take about half the time — it is working, not stuck.
 - **Speaker boundaries are rough.** A few words either side of a turn often go
   to the wrong person. The cleanup step fixes them; nothing here can.
+- **A glossary changes the whole transcript**, not only the names in it. It is
+  offered to the model while it listens, so it shifts what the model hears
+  everywhere. Leave it empty and nothing is passed.
 - **Leave the speaker count on Detect** unless you are certain. Pinning two on
   a recording with three merges the third in silently, and it reads as right.
 - **Long files are slow.** Stay plugged in — the app blocks sleep, but closing
