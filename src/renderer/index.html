@@ -102,9 +102,13 @@
             <span id="fileName" class="file__name"></span>
             <span id="fileMeta" class="file__meta"></span>
             <span id="filePath" class="file__path"></span>
-            <span class="dropzone__replace">Drop another file to replace it</span>
+            <span id="dropReplace" class="dropzone__replace">Drop another file to replace it</span>
           </span>
         </button>
+
+        <!-- Only there once something is waiting: one file is the common case
+             and a queue of one is a list with nothing to say. -->
+        <ol id="queue" class="queue" hidden></ol>
 
         <section class="card card--options">
         <div class="options">

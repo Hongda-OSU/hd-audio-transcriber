@@ -8,6 +8,8 @@ const fileName = document.getElementById('fileName') as HTMLElement;
 const fileMeta = document.getElementById('fileMeta') as HTMLElement;
 const filePathEl = document.getElementById('filePath') as HTMLElement;
 const startButton = document.getElementById('start') as HTMLButtonElement;
+const dropReplace = document.getElementById('dropReplace') as HTMLElement;
+const queueList = document.getElementById('queue') as HTMLOListElement;
 
 type TabName = 'transcribe' | 'transcript' | 'history' | 'settings';
 
@@ -68,6 +70,15 @@ const exportState = document.getElementById('exportState') as HTMLElement;
 /** The file currently loaded, and the input to a transcription run. */
 let current: AudioInfo | null = null;
 let busy = false;
+
+/**
+ * The files waiting their turn behind `current`.
+ *
+ * One at a time, always: whisperx holds a model of a couple of gigabytes and
+ * two of them at once on a 16GB machine takes both runs down. The point of a
+ * queue here is an unattended evening, not parallelism.
+ */
+let queue: AudioInfo[] = [];
 
 /**
  * What the user has renamed each diarization label to. Lives for as long as
@@ -454,65 +465,166 @@ function clearProgress(): void {
 
 /* --- actions ----------------------------------------------------------- */
 
-async function loadFile(path: string | null): Promise<void> {
-  if (!path || busy) return;
+/** The files behind the one on the card, newest drop last. */
+function renderQueue(): void {
+  queueList.replaceChildren();
 
-  clearFile();
-  clearResult();
-  clearProgress();
-  logLine.hidden = true;
-  showStatus('Reading…');
+  for (const [index, info] of queue.entries()) {
+    const item = document.createElement('li');
+    item.className = 'queue__item';
 
-  const result = await window.api.probe(path);
+    const position = document.createElement('span');
+    position.className = 'queue__position';
+    // Counting from two: the card above is the first.
+    position.textContent = String(index + 2);
 
-  // Narrowing on the failure shape is the whole reason IPC returns data
-  // instead of throwing.
-  if ('error' in result) {
-    showStatus(result.error, true);
-    return;
+    const name = document.createElement('span');
+    name.className = 'queue__name';
+    name.textContent = info.name;
+
+    const meta = document.createElement('span');
+    meta.className = 'queue__meta';
+    meta.textContent = formatDuration(info.durationSec);
+
+    const drop = document.createElement('button');
+    drop.className = 'queue__remove';
+    drop.type = 'button';
+    drop.textContent = 'Remove';
+    drop.addEventListener('click', () => {
+      queue.splice(index, 1);
+      renderQueue();
+    });
+
+    item.append(position, name, meta, drop);
+    queueList.append(item);
   }
 
-  clearStatus();
-  showFile(result);
+  queueList.hidden = queue.length === 0;
+  // The card's own hint is about replacing, which stops being what a drop does
+  // as soon as there is a queue behind it.
+  dropReplace.textContent = queue.length ? 'Drop more to add to the queue' : 'Drop another file to replace it';
 }
 
+/**
+ * Reads what was dropped and decides where each file goes: the first onto the
+ * card, the rest into the queue behind it.
+ *
+ * Dropping while a run is going adds to the queue rather than being ignored —
+ * that is the whole point of having one.
+ */
+async function loadFiles(paths: (string | null)[]): Promise<void> {
+  const wanted = paths.filter((p): p is string => Boolean(p));
+  if (wanted.length === 0) return;
+
+  // A fresh drop when nothing is running starts over; mid-run it only adds.
+  if (!busy) {
+    queue = [];
+    clearFile();
+    clearResult();
+    clearProgress();
+    logLine.hidden = true;
+  }
+  showStatus(wanted.length > 1 ? `Reading ${wanted.length} files…` : 'Reading…');
+
+  const failures: string[] = [];
+  for (const path of wanted) {
+    const result = await window.api.probe(path);
+    // Narrowing on the failure shape is the whole reason IPC returns data
+    // instead of throwing.
+    if ('error' in result) {
+      failures.push(result.error);
+      continue;
+    }
+    if (!current) showFile(result);
+    else queue.push(result);
+  }
+
+  renderQueue();
+  if (failures.length && !current) showStatus(failures[0] ?? 'Could not read that file.', true);
+  else if (failures.length) showStatus(`${failures.length} file(s) could not be read.`, true);
+  else clearStatus();
+}
+
+/**
+ * Works through the card and everything queued behind it, one at a time.
+ *
+ * A file that fails does not end the evening: the rest still run and the
+ * failures are named at the end. Stopping does end it — the button says Stop,
+ * and starting the next file instead would be the opposite of that.
+ */
 async function runTranscription(): Promise<void> {
   if (!current || busy) return;
 
   clearResult();
   setBusy(true);
-  showStatus('The first run downloads models and can take a long time.');
   logLine.hidden = false;
   logLine.textContent = '';
 
-  const result = await window.api.transcribe(current.path, readSettings());
+  const settings = readSettings();
+  const failures: string[] = [];
+  let done = 0;
+  let stopped = false;
+  let last: TranscribeResult | null = null;
+
+  while (current) {
+    const total = done + failures.length + 1 + queue.length;
+    showStatus(
+      total > 1
+        ? `${current.name} — ${done + failures.length + 1} of ${total}`
+        : 'The first run downloads models and can take a long time.',
+    );
+
+    const result = await window.api.transcribe(current.path, settings);
+    clearProgress();
+
+    if ('canceled' in result) {
+      stopped = true;
+      break;
+    }
+
+    if ('error' in result) {
+      failures.push(`${current.name}: ${result.error}`);
+      // A missing token stops everything — the rest would fail the same way.
+      if (result.error.includes('token')) {
+        setBusy(false);
+        logLine.hidden = true;
+        showStatus(result.error, true);
+        void refreshTokenState().then(() => showTab('settings'));
+        return;
+      }
+    } else {
+      done += 1;
+      last = result;
+    }
+
+    const next = queue.shift();
+    if (next) showFile(next);
+    else clearFile();
+    renderQueue();
+  }
+
   setBusy(false);
   clearProgress();
   logLine.hidden = true;
+  void refreshRuns();
 
   // Stopping is a decision, not a failure: it says so plainly and leaves the
   // file loaded, because the next thing the user does is usually run it again.
-  if ('canceled' in result) {
+  if (stopped) {
     showStatus('Stopped.');
     return;
   }
 
-  if ('error' in result) {
-    showStatus(result.error, true);
-    // A missing token is the one failure the user can fix right now, so put
-    // them in front of the field instead of making them find it.
-    if (result.error.includes('token')) {
-      void refreshTokenState().then(() => showTab('settings'));
-    }
-    return;
-  }
+  if (failures.length) showStatus(failures.join(' · '), true);
+  else clearStatus();
 
-  clearStatus();
-  logLine.hidden = true;
-  renderResult(result);
-  void refreshRuns();
-  // The run is over and the transcript is the point of it.
-  showTab('transcript');
+  // The transcript is the point of a single run. After a batch it is the last
+  // one of several, so the line above says how the batch went and History is
+  // where the others are.
+  if (last) {
+    renderResult(last);
+    if (done === 1 && !failures.length) showTab('transcript');
+  }
 }
 
 async function exportTranscript(): Promise<void> {
@@ -637,17 +749,16 @@ window.addEventListener('drop', (event) => {
   event.preventDefault();
   setDragging(false);
 
-  const file = event.dataTransfer?.files?.[0];
-  if (!file) return;
+  const files = [...(event.dataTransfer?.files ?? [])];
+  if (files.length === 0) return;
 
-  // Single file by design; extra ones in the same drop are ignored.
-  void loadFile(window.api.getPathForFile(file));
+  void loadFiles(files.map((file) => window.api.getPathForFile(file)));
 });
 
 /* --- wiring ------------------------------------------------------------ */
 
 dropzone.addEventListener('click', () => {
-  void window.api.chooseFile().then(loadFile);
+  void window.api.chooseFile().then((path) => loadFiles([path]));
 });
 
 startButton.addEventListener('click', () => {

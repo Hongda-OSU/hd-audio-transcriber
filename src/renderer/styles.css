@@ -479,6 +479,74 @@ body {
   color: var(--text-dim);
 }
 
+/* --- queue -------------------------------------------------------------- */
+/* Numbered from two: the card above the list is the first in line. */
+
+.queue {
+  margin: -8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.queue__item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.queue__position {
+  flex: none;
+  min-width: 14px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.queue__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.queue__meta {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Same manners as History's delete: out of the way until the row is wanted. */
+.queue__remove {
+  -webkit-app-region: no-drag;
+  appearance: none;
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12px;
+  cursor: default;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.queue__item:hover .queue__remove,
+.queue__remove:focus-visible {
+  opacity: 1;
+}
+
+.queue__remove:hover {
+  color: var(--danger);
+}
+
 /* --- glossary ----------------------------------------------------------- */
 
 .glossary__input {
