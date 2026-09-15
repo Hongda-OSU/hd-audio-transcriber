@@ -1,19 +1,16 @@
 /* Dark only, no theme switch — see the design notes in the M1 plan.
    Spacing steps off a 4px base: 4 / 8 / 12 / 16 / 24 / 32 / 48. */
 
-/* The window is a macOS vibrancy material, so the page paints on top of a blur
-   of whatever is behind it. Surfaces are tints rather than colours: a solid
-   grey card would cover the glass exactly where the eye goes. Fields keep a
-   dark of their own — a translucent input reads as decoration, not somewhere
-   to type. */
 :root {
-  --surface: rgba(255, 255, 255, 0.05);
-  --elevated: rgba(255, 255, 255, 0.09);
-  --border: rgba(255, 255, 255, 0.12);
-  --field: rgba(0, 0, 0, 0.22);
-  /* Anything that floats over the page pays for its own background. A tint
-     works on a surface because there is only the material behind it; over a
-     line of text it leaves both readable and neither legible. */
+  --bg: #0e0f10;
+  --surface: #17191b;
+  --elevated: #202326;
+  --border: #2c2f33;
+  /* An input is darker than the card it sits on, so it reads as somewhere to
+     type rather than as another panel. */
+  --field: var(--bg);
+  /* Anything that floats over the page pays for its own background rather than
+     borrowing whatever is under it. */
   --overlay: #202326;
   --text: #f2f3f4;
   --text-dim: #8e9298;
@@ -45,10 +42,7 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  /* A scrim over the material, not a colour instead of it: the blur still
-     shows through, just darker, which is what keeps light text readable over
-     whatever happens to be behind the window. */
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font);
   font-size: 15px;
@@ -306,7 +300,7 @@ body {
 }
 
 .button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.14);
+  background: #292d31;
 }
 
 .button:disabled {
