@@ -146,10 +146,12 @@ function watchForReload(win: BrowserWindow): void {
   });
 }
 
-ipcMain.handle('dialog:openAudio', async (): Promise<string | null> => {
+ipcMain.handle('dialog:openAudio', async (): Promise<string[]> => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     title: 'Choose audio',
-    properties: ['openFile'],
+    // Several, like a drop: picking an evening's recordings from the chooser
+    // and picking them in Finder should not be different features.
+    properties: ['openFile', 'multiSelections'],
     // The audio filter is a convenience, not a gate — "All files" stays available
     // because ffprobe, not this list, decides what we can actually read.
     filters: [
@@ -161,7 +163,7 @@ ipcMain.handle('dialog:openAudio', async (): Promise<string | null> => {
     ],
   });
 
-  return canceled || filePaths.length === 0 ? null : (filePaths[0] ?? null);
+  return canceled ? [] : filePaths;
 });
 
 ipcMain.handle('audio:probe', async (_event, filePath: string): Promise<AudioInfo | IpcFailure> => {

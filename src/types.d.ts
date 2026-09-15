@@ -112,7 +112,7 @@ interface Canceled {
 interface TranscriberApi {
   /** Electron 32 removed File.path; this is how a dropped file gets one back. */
   getPathForFile(file: File): string;
-  chooseFile(): Promise<string | null>;
+  chooseFile(): Promise<string[]>;
   probe(filePath: string): Promise<AudioInfo | IpcFailure>;
 
   transcribe(

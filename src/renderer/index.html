@@ -86,6 +86,9 @@
 
     <main class="stage">
       <section id="panelTranscribe" class="column" role="tabpanel" aria-labelledby="tabTranscribe">
+        <!-- The clear button is a sibling, not a child: the whole card is a
+             <button>, and a button inside one is neither valid nor clickable. -->
+        <div class="dropzone__wrap">
         <button id="dropzone" class="dropzone" type="button">
           <span id="dropEmpty" class="dropzone__empty">
             <svg class="dropzone__icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -94,16 +97,29 @@
               <path d="M4 20h16" />
             </svg>
             <span class="dropzone__title">Drop audio here</span>
-            <span class="dropzone__hint">or click to choose a file</span>
+            <!-- The queue is invisible until a second file exists, so the one
+                 screen that is always seen has to be where it is mentioned. -->
+            <span class="dropzone__hint">Several at once queue up — or click to choose</span>
           </span>
 
           <span id="dropFile" class="dropzone__file" hidden>
             <span id="fileName" class="file__name"></span>
             <span id="fileMeta" class="file__meta"></span>
             <span id="filePath" class="file__path"></span>
-            <span id="dropReplace" class="dropzone__replace">Drop another file to replace it</span>
+            <span id="dropReplace" class="dropzone__replace">Drop more to add to the queue</span>
           </span>
         </button>
+
+          <button
+            id="clearFile"
+            class="dropzone__clear"
+            type="button"
+            aria-label="Remove this file"
+            hidden
+          >
+            ×
+          </button>
+        </div>
 
         <!-- Only there once something is waiting: one file is the common case
              and a queue of one is a list with nothing to say. -->

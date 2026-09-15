@@ -8,7 +8,7 @@ const fileName = document.getElementById('fileName') as HTMLElement;
 const fileMeta = document.getElementById('fileMeta') as HTMLElement;
 const filePathEl = document.getElementById('filePath') as HTMLElement;
 const startButton = document.getElementById('start') as HTMLButtonElement;
-const dropReplace = document.getElementById('dropReplace') as HTMLElement;
+const clearFileButton = document.getElementById('clearFile') as HTMLButtonElement;
 const queueList = document.getElementById('queue') as HTMLOListElement;
 
 type TabName = 'transcribe' | 'transcript' | 'history' | 'settings';
@@ -190,6 +190,7 @@ function showFile(info: AudioInfo): void {
   dropEmpty.hidden = true;
   dropFile.hidden = false;
   dropzone.classList.add('is-loaded');
+  clearFileButton.hidden = busy;
   startButton.disabled = false;
 }
 
@@ -198,6 +199,7 @@ function clearFile(): void {
   dropEmpty.hidden = false;
   dropFile.hidden = true;
   dropzone.classList.remove('is-loaded');
+  clearFileButton.hidden = true;
   // Disabled rather than hidden: it shares a row with the alignment toggle, and
   // removing it would shuffle that row every time a file is loaded or cleared.
   startButton.disabled = true;
@@ -418,6 +420,9 @@ function setBusy(value: boolean): void {
   startButton.disabled = !value && !current;
   startButton.textContent = value ? 'Stop' : 'Transcribe';
   dropzone.classList.toggle('is-disabled', value);
+  // The card holds the file being transcribed while a run is going, so there
+  // is nothing there to dismiss.
+  clearFileButton.hidden = value || !current;
 }
 
 /* --- options ----------------------------------------------------------- */
@@ -500,26 +505,25 @@ function renderQueue(): void {
   }
 
   queueList.hidden = queue.length === 0;
-  // The card's own hint is about replacing, which stops being what a drop does
-  // as soon as there is a queue behind it.
-  dropReplace.textContent = queue.length ? 'Drop more to add to the queue' : 'Drop another file to replace it';
 }
 
 /**
  * Reads what was dropped and decides where each file goes: the first onto the
  * card, the rest into the queue behind it.
  *
- * Dropping while a run is going adds to the queue rather than being ignored —
- * that is the whole point of having one.
+ * Files always add, whether or not a run is going. Dropping used to throw away
+ * whatever was already loaded, which meant a queue could only ever be built in
+ * one drop — and nothing on screen said so until after the file was gone. The
+ * card and every queued row can be dismissed by hand instead.
  */
 async function loadFiles(paths: (string | null)[]): Promise<void> {
   const wanted = paths.filter((p): p is string => Boolean(p));
   if (wanted.length === 0) return;
 
-  // A fresh drop when nothing is running starts over; mid-run it only adds.
-  if (!busy) {
-    queue = [];
-    clearFile();
+  // The output of the last run goes when a new one is being set up from an
+  // empty card. Adding a second file to one already waiting is not that, and
+  // clearing then would take away a transcript being read.
+  if (!busy && !current) {
     clearResult();
     clearProgress();
     logLine.hidden = true;
@@ -758,7 +762,25 @@ window.addEventListener('drop', (event) => {
 /* --- wiring ------------------------------------------------------------ */
 
 dropzone.addEventListener('click', () => {
-  void window.api.chooseFile().then((path) => loadFiles([path]));
+  void window.api.chooseFile().then((paths) => loadFiles(paths));
+});
+
+/* Dismissing the card promotes whatever was behind it, the same move the run
+   loop makes between files: a queue with no card cannot be started. */
+clearFileButton.addEventListener('click', () => {
+  const next = queue.shift();
+  if (next) showFile(next);
+  else clearFile();
+  renderQueue();
+});
+
+/* ⌘O has been in the title bar tip since the hints were written, with nothing
+   listening for it: the app installs no menu, and Electron's default one has
+   no Open. */
+window.addEventListener('keydown', (event) => {
+  if (!event.metaKey || event.altKey || event.ctrlKey || event.key !== 'o') return;
+  event.preventDefault();
+  void window.api.chooseFile().then((paths) => loadFiles(paths));
 });
 
 startButton.addEventListener('click', () => {

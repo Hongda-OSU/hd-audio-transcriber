@@ -108,6 +108,48 @@ body {
 
 /* --- dropzone --------------------------------------------------------- */
 
+/* Only there to hang the clear button off the card's own corner. */
+.dropzone__wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dismisses the loaded file, the way each queued row can be dismissed. Out of
+   sight until the card holds something, and while a run is going: the file on
+   the card is the one being transcribed. */
+.dropzone__clear {
+  -webkit-app-region: no-drag;
+  appearance: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: default;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.dropzone__clear:hover {
+  background: var(--elevated);
+  color: var(--text);
+}
+
+.dropzone__clear:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .dropzone {
   -webkit-app-region: no-drag;
   appearance: none;
