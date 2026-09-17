@@ -116,10 +116,17 @@ Four tabs.
   report nothing and take about half the time — it is working, not stuck.
 - **Speaker boundaries are rough.** A few words either side of a turn often go
   to the wrong person. The cleanup step fixes them; nothing here can.
+- **Check every name the cleanup step gives back.** It is good at boundaries
+  and punctuation and bad at proper nouns: on one interview it replaced a name
+  the recording states three times, and listed the change against an original
+  the recording never contained. The bundle now tells it to flag rather than
+  rewrite, and to quote the transcript for every flag — a quotation has to be
+  findable, which is what makes an invented one show up.
 - **A glossary changes the whole transcript**, not only the names in it. It is
   offered to the model while it listens, so it shifts what the model hears
   everywhere. Leave it empty and nothing is passed.
 - **Leave the speaker count on Detect** unless you are certain. Pinning two on
   a recording with three merges the third in silently, and it reads as right.
-- **Long files are slow.** Stay plugged in — the app blocks sleep, but closing
-  the lid still sleeps.
+- **Long files are slow.** Stay plugged in and leave the lid up. The screen
+  going dark is nothing — the app blocks the machine from sleeping, not the
+  display. Closing the lid does sleep it, and nothing in an app can stop that.
