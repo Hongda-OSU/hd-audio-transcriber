@@ -419,7 +419,6 @@ function setBusy(value: boolean): void {
   busy = value;
   startButton.disabled = !value && !current;
   startButton.textContent = value ? 'Stop' : 'Transcribe';
-  dropzone.classList.toggle('is-disabled', value);
   // The card holds the file being transcribed while a run is going, so there
   // is nothing there to dismiss — and nothing for the first queued row to
   // trade places with, which is a state the rows have to be redrawn to show.

@@ -276,10 +276,10 @@ body {
   justify-content: safe center;
 }
 
-.dropzone.is-disabled {
-  opacity: 0.4;
-  pointer-events: none;
-}
+/* The card was dimmed and made unclickable while a run went, from before there
+   was a queue to add to. Dropping and ⌘O went on working the whole time, so
+   the one route it did block was the one a mouse would take, and it looked
+   like the app had stopped accepting files when it had not. */
 
 /* --- buttons ----------------------------------------------------------- */
 

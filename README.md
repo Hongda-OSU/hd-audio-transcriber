@@ -73,8 +73,11 @@ Every export format is generated from that JSON.
 Four tabs.
 
 - **Transcribe** — drop a file, set language, model, speaker count and
-  alignment, run it. Progress shows here, and the button becomes **Stop**. Drop
-  several and they queue, running one at a time until they are done.
+  alignment, run it. Progress shows here, and the button becomes **Stop**.
+  Files always add rather than replace, during a run as well as before one, so
+  a queue can be built a file at a time; ⌘O opens the chooser, which takes
+  several at once. Each queued row can be moved up or down or dropped, and the
+  card at the top is the first in line.
 - **Transcript** — the one you are working on, with the segment and speaker
   counts and how long the run took. One field per speaker renames every line at
   once, and the name is kept with the run; the export control writes the file
