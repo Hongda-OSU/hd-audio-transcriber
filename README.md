@@ -56,6 +56,15 @@ npm start       # compiles TypeScript, then launches the app
 
 `npm run dev` does the same and reloads on save.
 
+```bash
+npm run package   # builds out/HD Audio Transcriber.app
+```
+
+Unsigned, so macOS may want a right-click → Open the first time. Drag it to
+Applications and it behaves like any other app: the token, the settings and
+the folder of past runs are the same ones the unpackaged app uses. whisperx is
+still read from `~/.transcriber-env` — nothing about it is bundled.
+
 ## How it works
 
 The UI is Electron. The transcription is whisperx, running as a subprocess against the environment you installed above — no Python is bundled into the app.
@@ -108,7 +117,7 @@ Four tabs.
 | M4 | Rename speakers, export | ☑ |
 | M5 | Open a past run, hand the transcript off for cleanup | ☑ |
 | M6 | Glossary and a queue — long recordings, run unattended | ☑ |
-| M7 | Packaged `.app` | ☐ |
+| M7 | Packaged `.app` | ☑ |
 
 ## Notes
 
