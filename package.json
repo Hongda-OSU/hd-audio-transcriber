@@ -11,10 +11,12 @@
     "build": "tsc && npm run assets",
     "start": "npm run build && electron .",
     "dev": "bash scripts/dev.sh",
+    "package": "bash scripts/package.sh",
     "watch": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@electron/packager": "^20.3.0",
     "@types/node": "^26.5.0",
     "electron": "^44.3.0",
     "typescript": "^7.0.2"
