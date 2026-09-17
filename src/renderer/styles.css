@@ -558,6 +558,47 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* One place earlier or later, because the order files were dropped in is not
+   the order an evening is wanted in, and the only way to change it was to
+   remove a file and drag it again. */
+.queue__move {
+  -webkit-app-region: no-drag;
+  appearance: none;
+  flex: none;
+  width: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  cursor: default;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.queue__item:hover .queue__move,
+.queue__move:focus-visible {
+  opacity: 1;
+}
+
+/* Dimmed rather than gone: a row that loses its arrow would shuffle the two
+   beside it every time the queue changed length. */
+.queue__item:hover .queue__move:disabled {
+  opacity: 0.25;
+}
+
+.queue__move:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.queue__move:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 3px;
+}
+
 /* Same manners as History's delete: out of the way until the row is wanted. */
 .queue__remove {
   -webkit-app-region: no-drag;

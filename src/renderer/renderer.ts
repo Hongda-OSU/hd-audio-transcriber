@@ -421,8 +421,10 @@ function setBusy(value: boolean): void {
   startButton.textContent = value ? 'Stop' : 'Transcribe';
   dropzone.classList.toggle('is-disabled', value);
   // The card holds the file being transcribed while a run is going, so there
-  // is nothing there to dismiss.
+  // is nothing there to dismiss — and nothing for the first queued row to
+  // trade places with, which is a state the rows have to be redrawn to show.
   clearFileButton.hidden = value || !current;
+  renderQueue();
 }
 
 /* --- options ----------------------------------------------------------- */
@@ -471,6 +473,33 @@ function clearProgress(): void {
 /* --- actions ----------------------------------------------------------- */
 
 /** The files behind the one on the card, newest drop last. */
+/**
+ * Moves a queued file one place, treating the card as the place in front of
+ * the queue: the first row moving up takes the card's turn and sends what was
+ * there down to meet it.
+ *
+ * A run locks the card — the file on it is the one whisperx has open — so
+ * while one is going the first row has nowhere above it to go.
+ */
+function moveQueued(index: number, delta: -1 | 1): void {
+  const target = index + delta;
+
+  if (target < 0) {
+    const promoted = queue[index];
+    if (busy || !current || !promoted) return;
+    queue[index] = current;
+    showFile(promoted);
+  } else {
+    const from = queue[index];
+    const to = queue[target];
+    if (!from || !to) return;
+    queue[index] = to;
+    queue[target] = from;
+  }
+
+  renderQueue();
+}
+
 function renderQueue(): void {
   queueList.replaceChildren();
 
@@ -491,6 +520,23 @@ function renderQueue(): void {
     meta.className = 'queue__meta';
     meta.textContent = formatDuration(info.durationSec);
 
+    const up = document.createElement('button');
+    up.className = 'queue__move';
+    up.type = 'button';
+    up.textContent = '↑';
+    up.setAttribute('aria-label', `Move ${info.name} up`);
+    // Nowhere above the first row while the card is busy holding a run.
+    up.disabled = index === 0 && busy;
+    up.addEventListener('click', () => moveQueued(index, -1));
+
+    const down = document.createElement('button');
+    down.className = 'queue__move';
+    down.type = 'button';
+    down.textContent = '↓';
+    down.setAttribute('aria-label', `Move ${info.name} down`);
+    down.disabled = index === queue.length - 1;
+    down.addEventListener('click', () => moveQueued(index, 1));
+
     const drop = document.createElement('button');
     drop.className = 'queue__remove';
     drop.type = 'button';
@@ -500,7 +546,7 @@ function renderQueue(): void {
       renderQueue();
     });
 
-    item.append(position, name, meta, drop);
+    item.append(position, name, meta, up, down, drop);
     queueList.append(item);
   }
 
