@@ -109,31 +109,6 @@ interface Canceled {
   canceled: true;
 }
 
-/** One thing a cleaned-up document says the transcript contains. */
-interface Quotation {
-  at?: string;
-  text: string;
-  found: boolean;
-}
-
-/** A character the document uses that the transcript never does. */
-interface NovelCharacter {
-  char: string;
-  count: number;
-  context: string;
-}
-
-/** What checking a document against its own transcript found. Every quotation
- *  `found` is the good answer, not a failure. */
-interface VerifyReport {
-  /** The document's file name, so the panel can say what it read. */
-  file: string;
-  quotations: Quotation[];
-  novel: NovelCharacter[];
-  /** The document has no list of things to confirm, so it claims nothing. */
-  unchecked: boolean;
-}
-
 interface TranscriberApi {
   /** Electron 32 removed File.path; this is how a dropped file gets one back. */
   getPathForFile(file: File): string;
@@ -163,11 +138,6 @@ interface TranscriberApi {
     format: ExportFormat,
     names: SpeakerNames,
   ): Promise<ExportSaved | Canceled | IpcFailure>;
-
-  /** Asks for a cleaned-up document and reports what in it is not in the
-   *  transcript on screen. The cleanup step rewrites proper nouns, and says
-   *  it is quoting the audio when it does. */
-  verifyDocument(): Promise<VerifyReport | Canceled | IpcFailure>;
 
   /** Opens Finder on a file the app wrote. Main refuses any other path. */
   revealPath(target: string): Promise<void>;
