@@ -134,8 +134,9 @@ Four tabs.
   and punctuation and bad at proper nouns: on one interview it replaced a name
   the recording states three times, and listed the change against an original
   the recording never contained. The bundle now tells it to flag rather than
-  rewrite, and to quote the transcript for every flag — a quotation has to be
-  findable, which is what makes an invented one show up.
+  rewrite, and to quote the transcript for every flag. Search the transcript
+  for each quotation it hands back — there are only ever a few — because one
+  that cannot be found is one it made up.
 - **A glossary changes the whole transcript**, not only the names in it. It is
   offered to the model while it listens, so it shifts what the model hears
   everywhere. Leave it empty and nothing is passed.
