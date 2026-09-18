@@ -27,48 +27,21 @@ Personal tool, MIT licensed.
 bash setup_backend.sh
 ```
 
-This creates `~/.transcriber-env`. Only whisperx is pinned; torch, pyannote and
-numpy come from whisperx's own requirements. Re-running it does nothing if the
-environment is already built.
-
 **2. Accept the model terms** — click *Agree* once, signed in as the account
 your token belongs to:
 
 - https://huggingface.co/pyannote/speaker-diarization-community-1
 
-This is the model whisperx 3.8.6 asks for. Accepting the older
-`speaker-diarization-3.1` instead still fails with a 403.
-
 **3. Add a HuggingFace token** in the app's settings. It's saved to `config.json`, which stays out of git.
-
-Check that it worked:
-
-```bash
-source ~/.transcriber-env/bin/activate && python -c 'import whisperx, pyannote.audio; print("OK")'
-```
 
 ## Run
 
 ```bash
 npm install     # once
 npm start       # compiles TypeScript, then launches the app
+npm run dev     # the same, reloading on save
+npm run package # builds out/HD Audio Transcriber.app
 ```
-
-`npm run dev` does the same and reloads on save.
-
-```bash
-npm run package   # builds out/HD Audio Transcriber.app
-```
-
-Unsigned, so macOS may want a right-click → Open the first time. Drag it to
-Applications and it behaves like any other app: the token, the settings and
-the folder of past runs are the same ones the unpackaged app uses. whisperx is
-still read from `~/.transcriber-env` — nothing about it is bundled.
-
-**A built app never updates itself.** There is no auto-update and there is not
-going to be one, so a change only reaches it by running the command again and
-replacing the copy in Applications. `npm start` always runs the current code;
-the `.app` runs whatever it was built from.
 
 ## How it works
 
@@ -84,24 +57,12 @@ Every export format is generated from that JSON.
 
 ## The window
 
-Four tabs.
-
-- **Transcribe** — drop a file, set language, model, speaker count and
-  alignment, run it. Progress shows here, and the button becomes **Stop**.
-  Files always add rather than replace, during a run as well as before one, so
-  a queue can be built a file at a time; ⌘O opens the chooser, which takes
-  several at once. Each queued row can be moved up or down or dropped, and the
-  card at the top is the first in line.
-- **Transcript** — the one you are working on, with the segment and speaker
-  counts and how long the run took. One field per speaker renames every line at
-  once, and the name is kept with the run; the export control writes the file
-  out.
-- **History** — every run ever finished. Open one and it comes back complete,
-  export included, without touching the audio again. Delete puts it in the
-  Trash, so it asks nothing first. Disabled while the folder is empty.
-- **Settings** — the HuggingFace token, a glossary of names the recording uses,
-  where exports go, and where transcripts are kept. Both folders open in Finder
-  when you click them.
+- **Transcribe** — drop files, set the options, run. Drops always add, so the
+  queue can be built one file at a time and reordered.
+- **Transcript** — the run you are working on. A field per speaker renames
+  every line at once. Export from here.
+- **History** — every finished run, reopened without touching the audio again.
+- **Settings** — token, glossary, and the two folders.
 
 ## Exports
 
@@ -111,18 +72,6 @@ Four tabs.
 | **srt**, **vtt** | Subtitles |
 | **json** | Segments with both the label and the name given to it |
 | **cleanup bundle** | The draft plus the instructions for tidying it up, as one `.md` |
-
-## Status
-
-| | Milestone | Done |
-|---|---|---|
-| M1 | Window with drag-and-drop file import | ☑ |
-| M2 | whisperx wired up — text, speakers, timestamps | ☑ |
-| M3 | Options panel (language, model, speakers, alignment) + progress | ☑ |
-| M4 | Rename speakers, export | ☑ |
-| M5 | Open a past run, hand the transcript off for cleanup | ☑ |
-| M6 | Glossary and a queue — long recordings, run unattended | ☑ |
-| M7 | Packaged `.app` | ☑ |
 
 ## Notes
 
