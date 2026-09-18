@@ -65,6 +65,11 @@ Applications and it behaves like any other app: the token, the settings and
 the folder of past runs are the same ones the unpackaged app uses. whisperx is
 still read from `~/.transcriber-env` — nothing about it is bundled.
 
+**A built app never updates itself.** There is no auto-update and there is not
+going to be one, so a change only reaches it by running the command again and
+replacing the copy in Applications. `npm start` always runs the current code;
+the `.app` runs whatever it was built from.
+
 ## How it works
 
 The UI is Electron. The transcription is whisperx, running as a subprocess against the environment you installed above — no Python is bundled into the app.
