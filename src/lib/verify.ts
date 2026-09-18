@@ -7,137 +7,175 @@
 // Y" and ticks it off, never suspecting that X was invented too.
 //
 // Rules in the prompt only lower the rate. This does not ask: it looks the
-// characters up. A name that is not in the transcript is not in the transcript.
+// characters up.
 //
-// No Electron, no model, no network — two strings in, a list out.
+// The first version of this file compared every pair of adjacent characters,
+// and on a real document it reported 381 findings that were almost all
+// innocent. The cleanup step is asked to delete filler and merge stammered
+// repetitions, and every deletion joins two characters that were never
+// neighbours in the transcript. A thirteen-thousand-character document edited
+// down from ten thousand will do that hundreds of times. The unit was wrong,
+// not the threshold.
+//
+// What survives that is quotation. When the document says the transcript reads
+// «…», the claim is exact and can be checked exactly — and it is the claim
+// that failed.
+//
+// No Electron, no model, no network — two strings in, a report out.
 
-/** A stretch of the document whose characters are not in the transcript. */
-interface Unsourced {
-  /** The characters themselves, as the document writes them. */
+/** One thing the document says the transcript contains. */
+export interface Quotation {
+  /** The timestamp the item carries, when it has one: `12:27`. */
+  at?: string;
+  /** The quoted text, as the document writes it. */
   text: string;
-  /** Enough of the document around it to recognise where it came from. */
+  /** Whether the transcript contains it, punctuation aside. */
+  found: boolean;
+}
+
+/** A character the document uses that the transcript never does. */
+export interface NovelCharacter {
+  char: string;
+  /** How many times the document body uses it. */
+  count: number;
+  /** The first place it appears, to read it in. */
   context: string;
 }
 
-const HAN = /[㐀-䶿一-鿿豈-﫿]/;
-const CONTEXT = 12;
-
-function isHan(ch: string): boolean {
-  return HAN.test(ch);
+export interface DocumentCheck {
+  /** Every claim about the transcript, in the order the document makes them. */
+  quotations: Quotation[];
+  /**
+   * Characters in the prose that are not in the transcript at all. Editing can
+   * put two characters side by side that never met, but it cannot introduce a
+   * character out of nothing — so unlike a pair, a novel character is always
+   * something the cleanup step chose to write.
+   */
+  novel: NovelCharacter[];
+  /** True when the document has no list of things to confirm. */
+  unchecked: boolean;
 }
 
-/** The transcript with everything but Han characters taken out, so that a
- *  lookup is not defeated by the punctuation the cleanup step adds. Whisper
- *  writes almost none of its own — six marks in eleven thousand characters on
- *  the recording this was built for — so the two sides only line up once both
- *  are stripped. */
-function hanOnly(text: string): string {
+const HAN = /[㐀-䶿一-鿿豈-﫿]/;
+const WORD = /[㐀-䶿一-鿿豈-﫿A-Za-z0-9]/;
+const CONTEXT = 14;
+
+/**
+ * The comparable part of a string: letters, digits and Han, nothing else.
+ *
+ * Whisper writes almost no punctuation — six marks in eleven thousand
+ * characters on the recording this was built for — while the cleanup step is
+ * told to add it everywhere, so the two only line up once both are stripped.
+ * Latin stays: a name written in it is still a name, and dropping it would
+ * make «Amy妈妈» match on 妈妈 alone.
+ */
+function comparable(text: string): string {
   let out = '';
-  for (const ch of text) if (isHan(ch)) out += ch;
+  for (const ch of text) if (WORD.test(ch)) out += ch;
   return out;
 }
 
+/** Where the list of things to confirm begins. Everything from there on is the
+ *  cleanup step writing about its own work, and none of it is transcript. */
+function splitAtConfirmations(document: string): { prose: string; confirmations: string } {
+  const lines = document.split('\n');
+  const start = lines.findIndex((line) => /^\s*#{1,6}\s.*待确认/.test(line));
+  return start === -1
+    ? { prose: document, confirmations: '' }
+    : { prose: lines.slice(0, start).join('\n'), confirmations: lines.slice(start).join('\n') };
+}
+
 /**
- * The document without the lines it was asked to compose.
+ * The quotations an item makes about the transcript.
  *
- * Section titles and the note at the top are not quotations — the rules tell
- * the cleanup step to write them — so every one of them would be reported, and
- * a document with thirty sections would bury its real findings under thirty
- * headings. A name invented in a heading still shows up: the body says it too,
- * which is where a heading gets it from.
+ * An item reads `〔12:27〕原文「…」 → 建议「…」`: what is claimed on the left of
+ * the arrow, what is proposed on the right. Only the left is a claim about the
+ * recording — the right is meant not to be in it — so the arrow is where
+ * reading stops. Items in the wild also write 转录作 for 原文; both are the
+ * same claim, and neither is required to be matched, because a quotation
+ * before the arrow is a quotation whatever introduces it.
  */
-function body(document: string): string {
-  return document
+function claims(confirmations: string): { at?: string; text: string }[] {
+  const out: { at?: string; text: string }[] = [];
+
+  for (const line of confirmations.split('\n')) {
+    const claimed = line.split(/[→⇒]|->/)[0] ?? '';
+
+    // The timestamp nearest in front of each quotation, when the item has one.
+    let at: string | undefined;
+    for (const piece of claimed.split(/(?=〔|\[)/)) {
+      const stamp = /[〔[]\s*(\d{1,2}:\d{2}(?::\d{2})?)\s*[〕\]]/.exec(piece);
+      if (stamp?.[1]) at = stamp[1];
+
+      for (const quote of piece.match(/[「『][^」』\n]+[」』]/g) ?? []) {
+        const text = quote.slice(1, -1).trim();
+        // A one-character quotation is a letter being discussed, not a passage
+        // being cited, and it would match almost any transcript.
+        if (comparable(text).length >= 2) out.push(at ? { at, text } : { text });
+      }
+    }
+  }
+
+  return out;
+}
+
+/** The lines of the prose that carry speech: not the titles and notes the
+ *  cleanup step was asked to compose, and not the roster at the top. */
+function spoken(prose: string): string {
+  return prose
     .split('\n')
-    .filter((line) => !/^\s*(#|>)/.test(line))
+    .filter((line) => !/^\s*(#|>|[-*+]\s|\d+[.)]\s)/.test(line))
     .join('\n');
 }
 
-/** The document split into runs of Han characters. Runs matter: a pair taken
- *  across a comma is not a word the writer wrote, and reporting it would bury
- *  the real findings in noise. */
-function hanRuns(text: string): string[] {
-  const runs: string[] = [];
-  let run = '';
-  for (const ch of text) {
-    if (isHan(ch)) run += ch;
-    else if (run) {
-      runs.push(run);
-      run = '';
+function novelCharacters(prose: string, transcript: string): NovelCharacter[] {
+  const seen = new Set([...transcript].filter((ch) => HAN.test(ch)));
+  const body = spoken(prose);
+  const found = new Map<string, NovelCharacter>();
+
+  for (let i = 0; i < body.length; i += 1) {
+    const ch = body[i] as string;
+    if (!HAN.test(ch) || seen.has(ch)) continue;
+
+    const already = found.get(ch);
+    if (already) {
+      already.count += 1;
+      continue;
     }
+
+    const line = body.slice(body.lastIndexOf('\n', i) + 1, body.indexOf('\n', i) + 1 || undefined);
+    const at = i - (body.lastIndexOf('\n', i) + 1);
+    found.set(ch, {
+      char: ch,
+      count: 1,
+      context: line.slice(Math.max(0, at - CONTEXT), at + CONTEXT + 1).trim(),
+    });
   }
-  if (run) runs.push(run);
-  return runs;
+
+  return [...found.values()].sort((a, b) => b.count - a.count || a.char.localeCompare(b.char));
 }
 
 /**
- * Every stretch of `document` that cannot be found in `transcript`.
+ * Checks a cleaned-up document against the transcript it was made from.
  *
- * A pair of adjacent characters is the unit: single characters are too common
- * to mean anything, and anything longer would miss a two-character name. Pairs
- * that fail next to each other are one finding rather than several, so a name
- * the cleanup step invented is reported once, with the words around it.
- *
- * What comes back is a list to read, not a verdict. The cleanup step is
- * supposed to add connectives and tidy phrasing, and those are unsourced too;
- * they are short and dull, and the findings are ordered longest first so the
- * ones worth looking at are at the top.
+ * Two questions, and the first is the one that matters: does the transcript
+ * actually say what the document says it says? The second is a weaker signal
+ * kept because it is nearly free — a character the transcript never uses had
+ * to come from somewhere.
  */
-export function unsourced(document: string, transcript: string): Unsourced[] {
-  const source = hanOnly(transcript);
-  if (!source) return [];
+export function checkDocument(document: string, transcript: string): DocumentCheck {
+  const source = comparable(transcript);
+  if (!source) return { quotations: [], novel: [], unchecked: true };
 
-  const found = new Map<string, Unsourced>();
+  const { prose, confirmations } = splitAtConfirmations(document);
+  const quotations = claims(confirmations).map((claim) => ({
+    ...claim,
+    found: source.includes(comparable(claim.text)),
+  }));
 
-  for (const run of hanRuns(body(document))) {
-    // Which positions start a pair the transcript has never seen.
-    const broken: boolean[] = [];
-    for (let i = 0; i + 2 <= run.length; i += 1) {
-      broken[i] = !source.includes(run.slice(i, i + 2));
-    }
-
-    let i = 0;
-    while (i < broken.length) {
-      if (!broken[i]) {
-        i += 1;
-        continue;
-      }
-
-      // Run of failing pairs: the first covers two characters, each one after
-      // it adds a third, a fourth, and so on.
-      let end = i;
-      while (broken[end + 1]) end += 1;
-
-      const text = run.slice(i, end + 2);
-      if (!found.has(text)) {
-        const from = Math.max(0, i - CONTEXT);
-        const to = Math.min(run.length, end + 2 + CONTEXT);
-        found.set(text, {
-          text,
-          context: `${from > 0 ? '…' : ''}${run.slice(from, to)}${to < run.length ? '…' : ''}`,
-        });
-      }
-
-      i = end + 1;
-    }
-  }
-
-  // Longest first: an invented name runs to three or four characters, while
-  // the joining words a cleanup legitimately adds are almost always two.
-  return [...found.values()].sort(
-    (a, b) => b.text.length - a.text.length || a.text.localeCompare(b.text),
-  );
-}
-
-/** The findings as a report to read, or a line saying there are none. */
-export function report(findings: Unsourced[]): string {
-  if (findings.length === 0) return 'Every run of characters in the document is in the transcript.';
-
-  const lines = findings.map((f) => `${f.text}\n    ${f.context}`);
-  return [
-    `${findings.length} stretch${findings.length === 1 ? '' : 'es'} of the document are not in the transcript.`,
-    'Longest first. Added punctuation and joining words are expected; names are not.',
-    '',
-    ...lines,
-  ].join('\n');
+  return {
+    quotations,
+    novel: novelCharacters(prose, transcript),
+    unchecked: confirmations === '',
+  };
 }

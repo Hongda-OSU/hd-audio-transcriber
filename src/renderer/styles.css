@@ -678,6 +678,12 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* A quotation the transcript does not contain: the one thing in the panel that
+   is a finding rather than a note. */
+.check__text.is-bad {
+  color: var(--danger);
+}
+
 /* Where it sits in the document, so a name can be told from a connective
    without opening the file. */
 .check__context {

@@ -109,18 +109,29 @@ interface Canceled {
   canceled: true;
 }
 
-/** One stretch of a cleaned-up document that the transcript does not contain. */
-interface Unsourced {
+/** One thing a cleaned-up document says the transcript contains. */
+interface Quotation {
+  at?: string;
   text: string;
+  found: boolean;
+}
+
+/** A character the document uses that the transcript never does. */
+interface NovelCharacter {
+  char: string;
+  count: number;
   context: string;
 }
 
-/** What checking a document against its own transcript found. An empty
- *  `findings` is the good answer, not a failure. */
+/** What checking a document against its own transcript found. Every quotation
+ *  `found` is the good answer, not a failure. */
 interface VerifyReport {
   /** The document's file name, so the panel can say what it read. */
   file: string;
-  findings: Unsourced[];
+  quotations: Quotation[];
+  novel: NovelCharacter[];
+  /** The document has no list of things to confirm, so it claims nothing. */
+  unchecked: boolean;
 }
 
 interface TranscriberApi {

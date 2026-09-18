@@ -6,7 +6,7 @@ import { app, BrowserWindow, dialog, ipcMain, powerSaveBlocker, shell } from 'el
 import { forgetRun, listRuns, readArchive, recordRun } from './lib/archive';
 import { EXTENSIONS, render } from './lib/exporters';
 import { probeAudio } from './lib/probe';
-import { unsourced } from './lib/verify';
+import { checkDocument } from './lib/verify';
 import { cancel, isRunning, transcribe, WhisperxCancelled, WhisperxError } from './lib/whisperx';
 import {
   getExportDir,
@@ -244,7 +244,7 @@ ipcMain.handle(
       // split into words, and joining those back would only add the spaces
       // that get stripped again.
       const transcript = lastRun.result.segments.map((segment) => segment.text).join('');
-      return { file: basename(chosen), findings: unsourced(document, transcript) };
+      return { file: basename(chosen), ...checkDocument(document, transcript) };
     } catch (err) {
       return { error: `Could not read that document: ${(err as Error).message}` };
     }

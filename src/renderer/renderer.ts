@@ -853,12 +853,31 @@ exportButton.addEventListener('click', () => {
   void exportTranscript();
 });
 
+/** One row of the report: a mark, what it is about, and where to find it. */
+function checkRow(mark: string, subject: string, detail: string, bad: boolean): HTMLLIElement {
+  const item = document.createElement('li');
+  item.className = 'check__item';
+
+  const head = document.createElement('span');
+  head.className = bad ? 'check__text is-bad' : 'check__text';
+  head.textContent = `${mark}  ${subject}`;
+
+  const context = document.createElement('span');
+  context.className = 'check__context';
+  context.textContent = detail;
+
+  item.append(head, context);
+  return item;
+}
+
 /**
  * Reads a cleaned-up document back against the transcript it came from.
  *
- * The count is deliberately not called a number of errors. Punctuation and the
- * words a tidy-up legitimately adds are unsourced too; what the list is for is
- * the handful at the top, where a name the recording never said will be.
+ * What is checked is what the document claims: each «…» it says the recording
+ * contains, looked up in the recording. The first version compared every pair
+ * of adjacent characters and reported 381 innocent ones on a real document —
+ * a tidy-up deletes filler, and every deletion makes neighbours of characters
+ * that never met. A quotation cannot be produced that way.
  */
 async function checkDocument(): Promise<void> {
   checkButton.disabled = true;
@@ -877,31 +896,46 @@ async function checkDocument(): Promise<void> {
       return;
     }
 
-    if (report.findings.length === 0) {
-      checkSummary.textContent = `${report.file}: every run of characters in it is in the transcript.`;
-      checkSummary.classList.add('is-clean');
-      return;
+    const missing = report.quotations.filter((quotation) => !quotation.found).length;
+
+    // The headline is about the claims, because a claim is the thing that can
+    // be wrong on purpose. A document that claims nothing gets checked for
+    // nothing, and should say so rather than come back clean.
+    checkSummary.classList.toggle('is-clean', missing === 0);
+    if (report.unchecked) {
+      checkSummary.textContent =
+        `${report.file} has no list of things to confirm, so it claims nothing about the recording. ` +
+        'Only the characters below could be checked.';
+    } else if (report.quotations.length === 0) {
+      checkSummary.textContent = `${report.file}: the list of things to confirm quotes nothing.`;
+    } else if (missing === 0) {
+      checkSummary.textContent =
+        `${report.file}: all ${report.quotations.length} quotations are in the transcript.`;
+    } else {
+      checkSummary.textContent =
+        `${report.file}: ${missing} of ${report.quotations.length} quotations are not in the ` +
+        'transcript. A note citing words the recording never said is the failure this looks for.';
     }
 
-    checkSummary.classList.remove('is-clean');
-    checkSummary.textContent =
-      `${report.file}: ${report.findings.length} stretch${report.findings.length === 1 ? '' : 'es'} ` +
-      'not in the transcript, longest first. Added punctuation and joining words are expected; names are not.';
+    for (const quotation of report.quotations) {
+      checkList.append(
+        checkRow(
+          quotation.found ? '✓' : '✗',
+          `「${quotation.text}」`,
+          quotation.found
+            ? `quoted from ${quotation.at ? `〔${quotation.at}〕` : 'the transcript'}`
+            : 'not in the transcript',
+          !quotation.found,
+        ),
+      );
+    }
 
-    for (const finding of report.findings) {
-      const item = document.createElement('li');
-      item.className = 'check__item';
-
-      const text = document.createElement('span');
-      text.className = 'check__text';
-      text.textContent = finding.text;
-
-      const context = document.createElement('span');
-      context.className = 'check__context';
-      context.textContent = finding.context;
-
-      item.append(text, context);
-      checkList.append(item);
+    // Weaker and kept because it is nearly free: editing can make neighbours of
+    // characters that never met, but it cannot invent one.
+    for (const novel of report.novel) {
+      checkList.append(
+        checkRow('·', `${novel.char}${novel.count > 1 ? ` ×${novel.count}` : ''}`, novel.context, false),
+      );
     }
   } finally {
     checkButton.disabled = false;
