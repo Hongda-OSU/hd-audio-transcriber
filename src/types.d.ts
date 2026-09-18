@@ -109,6 +109,20 @@ interface Canceled {
   canceled: true;
 }
 
+/** One stretch of a cleaned-up document that the transcript does not contain. */
+interface Unsourced {
+  text: string;
+  context: string;
+}
+
+/** What checking a document against its own transcript found. An empty
+ *  `findings` is the good answer, not a failure. */
+interface VerifyReport {
+  /** The document's file name, so the panel can say what it read. */
+  file: string;
+  findings: Unsourced[];
+}
+
 interface TranscriberApi {
   /** Electron 32 removed File.path; this is how a dropped file gets one back. */
   getPathForFile(file: File): string;
@@ -138,6 +152,11 @@ interface TranscriberApi {
     format: ExportFormat,
     names: SpeakerNames,
   ): Promise<ExportSaved | Canceled | IpcFailure>;
+
+  /** Asks for a cleaned-up document and reports what in it is not in the
+   *  transcript on screen. The cleanup step rewrites proper nouns, and says
+   *  it is quoting the audio when it does. */
+  verifyDocument(): Promise<VerifyReport | Canceled | IpcFailure>;
 
   /** Opens Finder on a file the app wrote. Main refuses any other path. */
   revealPath(target: string): Promise<void>;

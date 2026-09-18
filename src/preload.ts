@@ -20,6 +20,8 @@ const api: TranscriberApi = {
 
   exportTranscript: (format, names) => ipcRenderer.invoke('transcript:export', format, names),
 
+  verifyDocument: () => ipcRenderer.invoke('transcript:verify'),
+
   revealPath: (target) => ipcRenderer.invoke('shell:reveal', target),
 
   // The event object stays on this side of the bridge; the renderer only ever

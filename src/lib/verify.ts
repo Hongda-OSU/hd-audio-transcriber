@@ -37,6 +37,22 @@ function hanOnly(text: string): string {
   return out;
 }
 
+/**
+ * The document without the lines it was asked to compose.
+ *
+ * Section titles and the note at the top are not quotations — the rules tell
+ * the cleanup step to write them — so every one of them would be reported, and
+ * a document with thirty sections would bury its real findings under thirty
+ * headings. A name invented in a heading still shows up: the body says it too,
+ * which is where a heading gets it from.
+ */
+function body(document: string): string {
+  return document
+    .split('\n')
+    .filter((line) => !/^\s*(#|>)/.test(line))
+    .join('\n');
+}
+
 /** The document split into runs of Han characters. Runs matter: a pair taken
  *  across a comma is not a word the writer wrote, and reporting it would bury
  *  the real findings in noise. */
@@ -73,7 +89,7 @@ export function unsourced(document: string, transcript: string): Unsourced[] {
 
   const found = new Map<string, Unsourced>();
 
-  for (const run of hanRuns(document)) {
+  for (const run of hanRuns(body(document))) {
     // Which positions start a pair the transcript has never seen.
     const broken: boolean[] = [];
     for (let i = 0; i + 2 <= run.length; i += 1) {

@@ -66,6 +66,10 @@ const speakerFields = document.getElementById('speakerFields') as HTMLElement;
 const exportFormat = document.getElementById('exportFormat') as HTMLSelectElement;
 const exportButton = document.getElementById('export') as HTMLButtonElement;
 const exportState = document.getElementById('exportState') as HTMLElement;
+const checkButton = document.getElementById('check') as HTMLButtonElement;
+const checkResult = document.getElementById('checkResult') as HTMLElement;
+const checkSummary = document.getElementById('checkSummary') as HTMLElement;
+const checkList = document.getElementById('checkList') as HTMLOListElement;
 
 /** The file currently loaded, and the input to a transcription run. */
 let current: AudioInfo | null = null;
@@ -213,6 +217,11 @@ function clearResult(): void {
   speakerNames = {};
   exportState.hidden = true;
   savedTo.hidden = true;
+  // The findings belong to the transcript they were measured against. Leaving
+  // them up while a different one loads would be a report about the wrong
+  // recording, and nothing on it would say so.
+  checkResult.hidden = true;
+  checkList.replaceChildren();
   // Transcript holds the one you are working on; History holds the rest. A tab
   // with nothing behind it should not be where the user is standing.
   TABS.transcript.tab.disabled = true;
@@ -842,6 +851,66 @@ startButton.addEventListener('click', () => {
 
 exportButton.addEventListener('click', () => {
   void exportTranscript();
+});
+
+/**
+ * Reads a cleaned-up document back against the transcript it came from.
+ *
+ * The count is deliberately not called a number of errors. Punctuation and the
+ * words a tidy-up legitimately adds are unsourced too; what the list is for is
+ * the handful at the top, where a name the recording never said will be.
+ */
+async function checkDocument(): Promise<void> {
+  checkButton.disabled = true;
+  checkButton.textContent = 'Reading…';
+
+  try {
+    const report = await window.api.verifyDocument();
+    if ('canceled' in report) return;
+
+    checkList.replaceChildren();
+    checkResult.hidden = false;
+
+    if ('error' in report) {
+      checkSummary.textContent = report.error;
+      checkSummary.classList.remove('is-clean');
+      return;
+    }
+
+    if (report.findings.length === 0) {
+      checkSummary.textContent = `${report.file}: every run of characters in it is in the transcript.`;
+      checkSummary.classList.add('is-clean');
+      return;
+    }
+
+    checkSummary.classList.remove('is-clean');
+    checkSummary.textContent =
+      `${report.file}: ${report.findings.length} stretch${report.findings.length === 1 ? '' : 'es'} ` +
+      'not in the transcript, longest first. Added punctuation and joining words are expected; names are not.';
+
+    for (const finding of report.findings) {
+      const item = document.createElement('li');
+      item.className = 'check__item';
+
+      const text = document.createElement('span');
+      text.className = 'check__text';
+      text.textContent = finding.text;
+
+      const context = document.createElement('span');
+      context.className = 'check__context';
+      context.textContent = finding.context;
+
+      item.append(text, context);
+      checkList.append(item);
+    }
+  } finally {
+    checkButton.disabled = false;
+    checkButton.textContent = 'Check…';
+  }
+}
+
+checkButton.addEventListener('click', () => {
+  void checkDocument();
 });
 
 // Selecting is fine; taking a copy out is not. This blocks the stand-in

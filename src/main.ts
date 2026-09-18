@@ -1,11 +1,12 @@
 import { copyFileSync, watch } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join } from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain, powerSaveBlocker, shell } from 'electron';
 
 import { forgetRun, listRuns, readArchive, recordRun } from './lib/archive';
 import { EXTENSIONS, render } from './lib/exporters';
 import { probeAudio } from './lib/probe';
+import { unsourced } from './lib/verify';
 import { cancel, isRunning, transcribe, WhisperxCancelled, WhisperxError } from './lib/whisperx';
 import {
   getExportDir,
@@ -205,6 +206,50 @@ const revealable = new Set<string>();
 ipcMain.handle('shell:reveal', (_event, target: string): void => {
   if (revealable.has(target)) shell.showItemInFolder(target);
 });
+
+/**
+ * Checks a cleaned-up document against the transcript it came from.
+ *
+ * The comparison is the run on screen, so the answer is always about the right
+ * recording — pick the wrong .md and everything in it reads as unsourced,
+ * which is the correct answer to the question that was asked.
+ *
+ * Read-only in both directions: a document is opened, never written, and the
+ * path is not added to `revealable` because the app did not create it.
+ */
+ipcMain.handle(
+  'transcript:verify',
+  async (event): Promise<VerifyReport | Canceled | IpcFailure> => {
+    if (!lastRun) return { error: 'Open a transcript first; there is nothing to check against.' };
+
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const options: Electron.OpenDialogOptions = {
+      title: 'Choose the cleaned-up document',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Document', extensions: ['md', 'markdown', 'txt'] },
+        { name: 'All files', extensions: ['*'] },
+      ],
+    };
+    const { canceled, filePaths } = await (win
+      ? dialog.showOpenDialog(win, options)
+      : dialog.showOpenDialog(options));
+
+    const chosen = canceled ? undefined : filePaths[0];
+    if (!chosen) return { canceled: true };
+
+    try {
+      const document = await readFile(chosen, 'utf8');
+      // The segments are the transcript: the archived JSON holds the same text
+      // split into words, and joining those back would only add the spaces
+      // that get stripped again.
+      const transcript = lastRun.result.segments.map((segment) => segment.text).join('');
+      return { file: basename(chosen), findings: unsourced(document, transcript) };
+    } catch (err) {
+      return { error: `Could not read that document: ${(err as Error).message}` };
+    }
+  },
+);
 
 /**
  * Keeps the machine awake while a run is in flight. An hour of audio is about
