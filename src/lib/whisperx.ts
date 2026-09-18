@@ -110,7 +110,10 @@ export function buildArgs(opts: TranscribeOptions, outputDir: string): string[] 
   // 'auto' means let whisperx detect it, which it does by omitting the flag.
   if (opts.language !== 'auto') args.push('--language', opts.language);
 
-  args.push('--diarize', '--hf_token', opts.hfToken);
+  // --diarize without --hf_token: the token travels in HF_TOKEN instead, so it
+  // never reaches argv, which every other user on the machine can read out of
+  // `ps`. huggingface_hub checks that variable before anything else.
+  args.push('--diarize');
 
   // Alignment is what produces per-word speakers, the only place a speaker
   // change inside a segment survives. Off, whisperx labels the whole segment
@@ -136,13 +139,6 @@ export function buildArgs(opts: TranscribeOptions, outputDir: string): string[] 
   );
 
   return args;
-}
-
-/** The same args with the token blanked, for logging. */
-export function redactArgs(args: string[]): string[] {
-  const i = args.indexOf('--hf_token');
-  if (i === -1) return args;
-  return args.map((a, n) => (n === i + 1 ? '••••' : a));
 }
 
 interface RawWord {
@@ -463,7 +459,9 @@ export async function transcribe(
     onProgress(next);
   };
 
-  onProgress({ phase, percent: null, line: `$ ${bin} ${redactArgs(args).join(' ')}` });
+  // Printable as it stands: buildArgs keeps the token out of the arguments, so
+  // there is nothing here to remember to hide.
+  onProgress({ phase, percent: null, line: `$ ${bin} ${args.join(' ')}` });
 
   try {
     await new Promise<void>((resolve, reject) => {
@@ -473,6 +471,10 @@ export async function transcribe(
         env: {
           ...process.env,
           PATH: `${envDir}/bin:/opt/homebrew/bin:/usr/local/bin:${process.env.PATH ?? ''}`,
+          // Where the diarization token is handed over. An environment is
+          // readable by this process's children and nobody else; argv is
+          // readable by anyone with an account here.
+          HF_TOKEN: opts.hfToken,
         },
       });
       running = child;
