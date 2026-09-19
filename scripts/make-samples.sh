@@ -21,8 +21,8 @@ mkdir -p "$OUT"
 VOICE_A="Tingting"
 VOICE_B="Grandpa (Chinese (China mainland))"
 
-say_line() {  # say_line <index> <voice> <text>
-  local n; printf -v n "%02d" "$1"
+say_line() {  # say_line <file stem> <voice> <text>
+  local n="$1"
   say -v "$2" -o "$TMP/$n.aiff" "$3"
   local d
   d=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$TMP/$n.aiff")
@@ -36,15 +36,42 @@ say_line() {  # say_line <index> <voice> <text>
   ffmpeg -v error -y -f lavfi -t 0.4 -i anullsrc=r=22050:cl=mono "$TMP/${n}_gap.aiff"
 }
 
-echo "▶ interview-tts.m4a — two speakers, twelve turns"
+# One recording: start, a run of add, then finish. The slug prefixes the clips
+# so a second recording cannot collide with the first.
+SLUG=""; N=0
 
-i=0
-: > "$TMP/lines.txt"
-add() {  # add <voice> <speaker label> <text>
-  i=$((i + 1))
-  say_line "$i" "$1" "$3"
-  printf '%s\t%s\n' "$2" "$3" >> "$TMP/lines.txt"
+start() {  # start <slug>
+  SLUG="$1"; N=0
+  : > "$TMP/$SLUG.lines"
+  : > "$TMP/$SLUG.concat"
 }
+
+add() {  # add <voice> <speaker label> <text>
+  N=$((N + 1))
+  local n; printf -v n "%02d" "$N"
+  say_line "$SLUG-$n" "$1" "$3"
+  printf '%s\t%s\n' "$2" "$3" >> "$TMP/$SLUG.lines"
+  printf "file '%s'\n" "$TMP/$SLUG-$n.aiff" "$TMP/$SLUG-${n}_gap.aiff" >> "$TMP/$SLUG.concat"
+}
+
+finish() {  # finish <output stem>
+  ffmpeg -v error -y -f concat -safe 0 -i "$TMP/$SLUG.concat" -c:a aac -b:a 128k "$OUT/$1.m4a"
+
+  # The transcript this recording should produce, with the turn boundaries.
+  : > "$OUT/$1-truth.txt"
+  local t=0 k n d end line
+  for k in $(seq 1 $N); do
+    printf -v n "%02d" "$k"
+    d=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$TMP/$SLUG-$n.aiff")
+    end=$(echo "$t + $d" | bc)
+    line=$(sed -n "${k}p" "$TMP/$SLUG.lines")
+    printf '%6.1f–%6.1f  %s\n' "$t" "$end" "$line" >> "$OUT/$1-truth.txt"
+    t=$(echo "$end + 0.4" | bc)
+  done
+}
+
+echo "▶ interview-tts.m4a — two speakers, twelve turns"
+start a
 
 add "$VOICE_A" "Interviewer" "您好，非常感谢您抽出时间接受我们的访谈。"
 add "$VOICE_B" "Subject"     "客气了，能聊聊这些事情我也很高兴。"
@@ -59,23 +86,24 @@ add "$VOICE_B" "Subject"     "太大了。以前全靠手上功夫，现在很�
 add "$VOICE_A" "Interviewer" "最后一个问题，如果现在有年轻人想入行，您会跟他说什么？"
 add "$VOICE_B" "Subject"     "我会跟他说，别着急。这行没有捷径，你花多少时间它就给你多少回报。急着出成绩的人，往往做不长。"
 
-: > "$TMP/concat.txt"
-for n in $(seq -w 1 $i); do
-  echo "file '$TMP/$n.aiff'" >> "$TMP/concat.txt"
-  echo "file '$TMP/${n}_gap.aiff'" >> "$TMP/concat.txt"
-done
-ffmpeg -v error -y -f concat -safe 0 -i "$TMP/concat.txt" -c:a aac -b:a 128k "$OUT/interview-tts.m4a"
+finish interview-tts
 
-# The transcript this recording should produce, with the turn boundaries.
-: > "$OUT/interview-tts-truth.txt"
-t=0
-for n in $(seq -w 1 $i); do
-  d=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$TMP/$n.aiff")
-  end=$(echo "$t + $d" | bc)
-  line=$(sed -n "$((10#$n))p" "$TMP/lines.txt")
-  printf '%6.1f–%6.1f  %s\n' "$t" "$end" "$line" >> "$OUT/interview-tts-truth.txt"
-  t=$(echo "$end + 0.4" | bc)
-done
+# A second recording, so the queue has something to queue. Different voices as
+# well as a different topic: two files that sound alike would make a demo of
+# speaker separation prove nothing.
+echo "▶ interview-tts-2.m4a — a shorter one, two other voices"
+VOICE_C="Grandma (Chinese (China mainland))"
+VOICE_D="Reed (Chinese (China mainland))"
+start b
+
+add "$VOICE_D" "Interviewer" "今天想请您聊聊那家照相馆。"
+add "$VOICE_C" "Subject"     "好啊。那个店开了二十六年，去年才关的。"
+add "$VOICE_D" "Interviewer" "当初怎么会想到开照相馆呢？"
+add "$VOICE_C" "Subject"     "其实是接手的。原来的老板要搬走，问我要不要盘下来。我那时候在纺织厂上班，一个月工资不够养家，就咬牙接了。头两年天天泡在暗房里，手指头都被药水泡白了。"
+add "$VOICE_D" "Interviewer" "生意最好的是哪几年？"
+add "$VOICE_C" "Subject"     "九几年吧。那会儿结婚都要拍全家福，一到周末门口能排到街上。后来大家都有手机了，来的人就少了。不过老街坊还是会来，拍身份证照片，顺便坐下来说说话。"
+
+finish interview-tts-2
 
 echo "▶ format probes — one container each, a few seconds is enough"
 ffmpeg -v error -y -f lavfi -i "sine=frequency=440:duration=4" -c:a libmp3lame "$OUT/probe.mp3"
