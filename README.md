@@ -7,8 +7,6 @@ Personal tool, MIT licensed.
 
 https://github.com/user-attachments/assets/2726df5f-6db7-4d47-b66c-847599851b99
 
-1:42 of audio, just under two minutes of work. The wait runs at 20× here.
-
 ## What it does
 
 - **Transcribes** speech to text
