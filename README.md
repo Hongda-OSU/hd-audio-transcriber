@@ -5,7 +5,7 @@ A macOS app that turns audio into a transcript with speaker labels and timestamp
 Drop in a file, get text. Edit the speaker names, export it.
 Personal tool, MIT licensed.
 
-https://github.com/user-attachments/assets/2726df5f-6db7-4d47-b66c-847599851b99
+https://github.com/user-attachments/assets/6f87acb7-4a2b-4b3f-952f-9960ba3bd41c
 
 ## What it does
 
