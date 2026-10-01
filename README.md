@@ -1,94 +1,75 @@
 # 🎙️ HD Audio Transcriber
 
-A macOS app that turns audio into a transcript with speaker labels and timestamps.
-
-Drop in a file, get text. Edit the speaker names, export it.
-Personal tool, MIT licensed.
+A macOS app that turns a recording into a transcript with speaker labels
+and timestamps — so an interview becomes text you can edit and export.
 
 https://github.com/user-attachments/assets/6f87acb7-4a2b-4b3f-952f-9960ba3bd41c
 
-## What it does
+## Features
 
-- **Transcribes** speech to text
+- **Transcribes** speech to text, locally — the audio never leaves the machine
 - **Separates speakers** (`SPEAKER_00`, `SPEAKER_01`… — rename them to real names)
 - **Keeps timestamps** for every segment
+- **Queues files** and runs them one after another
 - **Exports** to txt, srt, vtt, json, or a bundle to hand to an LLM for cleanup
 
-## Requirements
+## Tech Stack
+
+- App: Electron, TypeScript
+- Transcription: whisperx (Whisper + pyannote diarization), running locally
+  in its own Python environment — nothing is bundled into the app and no
+  audio is uploaded
+- Media: ffmpeg
+
+## Getting Started
+
+### Prerequisites
 
 - macOS
 - [Node.js](https://nodejs.org)
-- ffmpeg and Python 3.10–3.13 — the setup script installs both if missing
+- ffmpeg and Python 3.10–3.13 — `setup_backend.sh` installs both if missing
   (macOS ships Python 3.9, which whisperx no longer accepts)
 
-## Setup
-
-**1. Install the backend** (once per machine):
+### Installation
 
 ```bash
-bash setup_backend.sh
+git clone https://github.com/Hongda-OSU/hd-audio-transcriber.git
+cd hd-audio-transcriber
+npm install
+bash setup_backend.sh          # several GB, once per machine
+bash scripts/make-samples.sh   # test audio; samples/ is not in git
 ```
 
-**2. Accept the model terms** — click *Agree* once, signed in as the account
-your token belongs to:
+Then, for speaker separation only:
 
-- https://huggingface.co/pyannote/speaker-diarization-community-1
+1. Accept the model terms at
+   [pyannote/speaker-diarization-community-1](https://huggingface.co/pyannote/speaker-diarization-community-1),
+   signed in as the account your token belongs to.
+2. Create a read token at
+   [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+   and paste it into the app under **Settings**. It is saved outside the
+   repository and never committed.
 
-**3. Add a HuggingFace token** in the app's settings. It's saved to `config.json`, which stays out of git.
-
-## Run
+## Usage
 
 ```bash
-npm install     # once
-npm start       # compiles TypeScript, then launches the app
-npm run dev     # the same, reloading on save
-npm run package # builds out/HD Audio Transcriber.app
+npm start        # compile, then launch
+npm run dev      # the same, reloading on save
+npm run package  # build out/HD Audio Transcriber.app
 ```
 
-## How it works
+Drop audio on the window, set the options, press **Transcribe**. Drop more
+to queue them.
 
-The UI is Electron. The transcription is whisperx, running as a subprocess against the environment you installed above — no Python is bundled into the app.
+> **Check the names the cleanup step returns.** It is good at punctuation
+> and bad at proper nouns: on one interview it renamed someone the recording
+> names three times, and cited an original the recording never contained.
+> Search the transcript for each quotation it gives you — one you cannot
+> find is one it made up.
 
-```
-Electron ──spawn──> ~/.transcriber-env/bin/whisperx
-    ↑                         │
-    └─── segments.json ◀──────┘
-```
+More in [docs/guide.md](docs/guide.md): how it works, what each tab does,
+the export formats, and the rest of what to watch out for.
 
-Every export format is generated from that JSON.
+## License
 
-## The window
-
-- **Transcribe** — drop files, set the options, run. Drops always add, so the
-  queue can be built one file at a time and reordered.
-- **Transcript** — the run you are working on. A field per speaker renames
-  every line at once. Export from here.
-- **History** — every finished run, reopened without touching the audio again.
-- **Settings** — token, glossary, and the two folders.
-
-## Exports
-
-| | |
-|---|---|
-| **txt** | Timestamp and speaker on one line, what they said on the next |
-| **srt**, **vtt** | Subtitles |
-| **json** | Segments with both the label and the name given to it |
-| **cleanup bundle** | The draft plus the instructions for tidying it up, as one `.md` |
-
-## Notes
-
-- **The percentage stops before the run does.** Alignment and diarization
-  report nothing and take about half the time. Not stuck.
-- **Speaker boundaries are rough.** A few words either side of a turn go to
-  the wrong person. The cleanup step fixes them; nothing here can.
-- **Check the names the cleanup step returns.** It is good at punctuation and
-  bad at proper nouns: on one interview it renamed someone the recording names
-  three times, and cited an original the recording never contained. Search the
-  transcript for each quotation it gives you — one you cannot find is one it
-  made up.
-- **A glossary changes the whole transcript**, not only the names in it — it
-  is offered to the model while it listens. Empty passes nothing.
-- **Leave the speaker count on Detect** unless you are certain. Pin two on a
-  recording with three and the third is merged in silently, reading as right.
-- **Long files are slow.** Stay plugged in, lid up. A dark screen is fine —
-  the app blocks sleep, not the display. Closing the lid sleeps it anyway.
+MIT
