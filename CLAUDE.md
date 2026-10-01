@@ -46,4 +46,17 @@ timestamps. Personal tool, MIT. Spec is in Notion; ask before planning.
 - `unset ELECTRON_RUN_AS_NODE` before launching Electron, or the app
   exits 0 with no output and looks like a signing failure.
 
+## Read these only when relevant
+
+- `docs/guide.md` — what each tab does, the export formats, the known
+  rough edges
+- Notion「实现笔记与踩过的坑」— whisperx interface, measured timings,
+  packaging, release. Ask for the link.
+
+## When unsure
+
+Propose the approach before writing code if a change touches more than
+three files, the whisperx command line, or the archive format on disk.
+Ask before adding a dependency — `dependencies` is empty today.
+
 Out of scope: signing, notarization, App Store, auto-update, non-macOS.
